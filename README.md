@@ -4,6 +4,10 @@
 Omarchy configs for **dual monitor setups with Dota 2 support and matchmaking enabled**.  
 These are my personal system and UI configuration files, tuned for a fast, minimal workflow and reliable gaming experience on Omarchy OS.
 
+**Motivation:**  
+After experimenting with various Wayland setups, I wanted a stable configuration that handles dual monitors cleanly, feels consistent with Windows pointer precision, and allows Dota 2 matchmaking to work natively without VAC issues.  
+This setup aims to keep Omarchy lightweight yet polished — ready for both productivity and competitive gaming.
+
 ---
 
 ## 🧭 Overview
@@ -50,6 +54,9 @@ device {
     accel_profile = adaptative
 }
 ```
+
+The input device section fine-tunes pointer behavior for the **Logitech G300s** mouse.
+This setup approximates the feel of **Windows “pointer speed = 13” with “Enhance pointer precision = enabled”**, giving smoother tracking and similar cursor acceleration under Hyprland.
 
 ---
 
@@ -103,9 +110,11 @@ This ensures all six workspaces are consistently displayed in the Waybar interfa
 
 ## 🎮 Gaming Support
 
-### Steam / Dota 2
+Dota 2 runs best **natively**, without additional wrappers such as Gamescope or Proton.
+While these wrappers will still launch the game correctly, **secure features like matchmaking will be unavailable** — you’ll be limited to **demo mode and local lobbies** only.
+Running the native Linux version avoids this issue entirely, as **VAC verification always fails under wrappers**.
 
-If matchmaking fails or VAC can’t verify your machine, launch Dota 2 with:
+If you must use custom Vulkan or debugging settings, the following command can still be used:
 
 ```bash
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
