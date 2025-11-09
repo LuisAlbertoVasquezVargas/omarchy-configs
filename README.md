@@ -81,14 +81,23 @@ exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
 
 ## 🧰 Waybar Setup
 
-Includes:
+The default Omarchy Waybar configuration supports five workspaces.
+This setup updates the `persistent-workspaces` array to support **six workspaces**, matching the dual-monitor Hyprland layout.
 
-* Workspace icons with active indicator
-* System modules (network, audio, battery, CPU)
-* Clock and update indicators centered
+```jsonc
+# Filename: ~/.config/waybar/config.jsonc
 
-Config location:
-`~/.config/waybar/config.jsonc`
+"persistent-workspaces": {
+  "1": [],
+  "2": [],
+  "3": [],
+  "4": [],
+  "5": [],
+  "6": []
+}
+```
+
+This ensures all six workspaces are consistently displayed in the Waybar interface.
 
 ---
 
