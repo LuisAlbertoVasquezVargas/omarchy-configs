@@ -12,7 +12,6 @@ Optimized for:
 - Dual display (`DP-1` main + `HDMI-A-1` secondary)
 - 6 workspaces distributed evenly across both monitors
 - NVIDIA Vulkan environment for Dota 2 matchmaking stability
-- LATAM keyboard layout with Caps as Compose key
 - Brave browser and Steam integration for daily use and gaming
 
 ---
@@ -52,7 +51,6 @@ workspace=6,monitor:HDMI-A-1
 * Modular structure sourcing Omarchy defaults and user overrides
 * Explicit `monitors.conf` import for cleaner separation of display logic
 * 6-workspace layout evenly split between both monitors
-* `latam` keyboard layout, Caps = Compose key
 * Custom Logitech G300s mouse configuration (sensitivity 0.20, adaptive acceleration)
 
 ---
