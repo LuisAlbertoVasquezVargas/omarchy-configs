@@ -42,16 +42,14 @@ workspace=3,monitor:DP-1
 workspace=4,monitor:HDMI-A-1
 workspace=5,monitor:HDMI-A-1
 workspace=6,monitor:HDMI-A-1
+
+# Input devices
+device {
+    name = logitech-g300s-optical-gaming-mouse
+    sensitivity = 0.20
+    accel_profile = adaptative
+}
 ```
-
----
-
-## 🧩 Hyprland Highlights
-
-* Modular structure sourcing Omarchy defaults and user overrides
-* Explicit `monitors.conf` import for cleaner separation of display logic
-* 6-workspace layout evenly split between both monitors
-* Custom Logitech G300s mouse configuration (sensitivity 0.20, adaptive acceleration)
 
 ---
 
