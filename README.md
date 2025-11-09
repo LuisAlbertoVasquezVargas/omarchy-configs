@@ -53,6 +53,32 @@ device {
 
 ---
 
+## ⚙️ Extra Autostart Processes
+
+These commands are executed automatically on startup to ensure each workspace is initialized and attached to its corresponding monitor.
+
+```ini
+# Filename: ~/.config/hypr/autostart.conf
+
+# Extra autostart processes
+# exec-once = uwsm app -- my-service
+
+exec = hyprctl dispatch workspace 1
+exec = hyprctl dispatch movetoworkspace 1,DP-1
+exec = hyprctl dispatch workspace 2
+exec = hyprctl dispatch movetoworkspace 2,DP-1
+exec = hyprctl dispatch workspace 3
+exec = hyprctl dispatch movetoworkspace 3,DP-1
+exec = hyprctl dispatch workspace 4
+exec = hyprctl dispatch movetoworkspace 4,HDMI-A-1
+exec = hyprctl dispatch workspace 5
+exec = hyprctl dispatch movetoworkspace 5,HDMI-A-1
+exec = hyprctl dispatch workspace 6
+exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
+```
+
+---
+
 ## 🧰 Waybar Setup
 
 Includes:
