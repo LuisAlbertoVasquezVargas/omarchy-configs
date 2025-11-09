@@ -97,3 +97,4 @@ yay -S brave-bin
 ---
 ```
 
+
