@@ -67,9 +67,6 @@ These commands are executed automatically on startup to ensure each workspace is
 ```ini
 # Filename: ~/.config/hypr/autostart.conf
 
-# Extra autostart processes
-# exec-once = uwsm app -- my-service
-
 exec = hyprctl dispatch workspace 1
 exec = hyprctl dispatch movetoworkspace 1,DP-1
 exec = hyprctl dispatch workspace 2
@@ -120,20 +117,29 @@ If you must use custom Vulkan or debugging settings, the following command can s
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
 
-### Essential Packages
+### Explanation of Flags
 
-```bash
-sudo pacman -S steam
-yay -S brave-bin
-```
+* **`-console`** → Enables the developer console inside Dota 2 for custom commands or diagnostics.
+* **`-novid`** → Skips the Valve intro video during launch, speeding up startup time.
+* **`-safe`** → Launches the game in safe mode, using default settings to recover from crashes or bad configs.
 
 ---
 
-## 🧠 Quick Notes
+## 💿 Installing Steam and Brave
 
-* Check monitors: `hyprctl monitors`
-* Relaunch Hyprland after changes (**Super + Esc → Relaunch**)
-* Keep your configs versioned — this repo serves as your baseline backup.
+### Steam (from official Arch repositories)
+
+```bash
+sudo pacman -S steam
+```
+
+### Brave Browser (via AUR)
+
+```bash
+yay -S brave-bin
+```
+
+Once installed, both integrate seamlessly under Omarchy and Wayland.
 
 ---
 
