@@ -6,7 +6,7 @@ These are my personal system and UI configuration files, tuned for a fast, minim
 
 **Motivation:**  
 After experimenting with various Wayland setups, I wanted a stable configuration that handles dual monitors cleanly, feels consistent with Windows pointer precision, and allows Dota 2 matchmaking to work natively without VAC issues.  
-This setup aims to keep Omarchy lightweight yet polished — ready for both productivity and competitive gaming.
+This setup was built and tested on an **AMD Ryzen 7 5700X** paired with an **NVIDIA GeForce GTX 1650 SUPER**, aiming to keep Omarchy lightweight yet polished — ready for both productivity and competitive gaming.
 
 ---
 
