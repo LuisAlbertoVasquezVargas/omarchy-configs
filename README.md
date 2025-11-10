@@ -111,13 +111,15 @@ Dota 2 runs best **natively**, without additional wrappers such as Gamescope or 
 While these wrappers will still launch the game correctly, **secure features like matchmaking will be unavailable** — you’ll be limited to **demo mode and local lobbies** only.
 Running the native Linux version avoids this issue entirely, as **VAC verification always fails under wrappers**.
 
-If you must use custom Vulkan or debugging settings, the following command can still be used:
+### Launch Options
+
+Use these launch options in your Steam game settings to ensure Vulkan compatibility and safe startup:
 
 ```bash
 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
 
-### Explanation of Flags
+**Explanation of flags**
 
 * **`-console`** → Enables the developer console inside Dota 2 for custom commands or diagnostics.
 * **`-novid`** → Skips the Valve intro video during launch, speeding up startup time.
