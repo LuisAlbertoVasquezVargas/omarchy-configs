@@ -53,6 +53,13 @@ device {
     sensitivity = 0.20
     accel_profile = adaptative
 }
+
+# Steam window management
+
+# Keep centering the login dialog
+windowrulev2 = center, title:^Sign in to Steam$
+# And force it to workspace 1
+windowrulev2 = workspace 1, title:^Sign in to Steam$
 ```
 
 The input device section fine-tunes pointer behavior for the **Logitech G300s** mouse.
