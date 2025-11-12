@@ -123,7 +123,7 @@ Running the native Linux version avoids this issue entirely, as **VAC verificati
 Use these launch options in your Steam game settings to ensure Vulkan compatibility and safe startup:
 
 ```bash
-VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
+SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
 
 **Explanation of flags**
