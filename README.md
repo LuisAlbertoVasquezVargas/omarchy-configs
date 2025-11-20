@@ -1,7 +1,7 @@
 
 # 🜲 Omarchy Configs
 
-Omarchy configs for **dual monitor setups with Dota 2 support and matchmaking enabled**.
+Omarchy configs for **dual-monitor setups with Dota 2 support and matchmaking enabled**.
 These are my personal system and UI configuration files, tuned for a fast, minimal workflow and reliable gaming experience on Omarchy OS.
 
 **Motivation:**
@@ -23,8 +23,11 @@ Optimized for:
 
 ## 🖥️ Dual Monitor Configuration
 
-This replaces the default single-monitor Omarchy layout with a **two-display setup** and six workspace assignments.
-The main display (`DP-1`) runs at **2560×1440 @ 120 Hz**, and the secondary (`HDMI-A-1`) runs at **1366×768 @ 60 Hz**, positioned to the right.
+Create your monitor layout in:
+
+```
+~/.config/hypr/monitors.conf
+```
 
 ```ini
 # Filename: ~/.config/hypr/monitors.conf
@@ -33,11 +36,18 @@ monitor=DP-1,2560x1440@120,0x0,1
 monitor=HDMI-A-1,1366x768@60,2560x0,1
 ```
 
-Workspaces are explicitly mapped in the main Hyprland config:
+---
+
+## 🧩 Append These Lines to the End of hyprland.conf
+
+To activate workspace distribution, mouse settings, and Steam window rules, **append the following lines at the end of**:
+
+```
+~/.config/hypr/hyprland.conf
+```
 
 ```ini
-# Filename: ~/.config/hypr/hyprland.conf
-
+# Workspace assignments
 # Primary monitor (DP-1): workspaces 1–3
 workspace=1,monitor:DP-1
 workspace=2,monitor:DP-1
@@ -48,7 +58,7 @@ workspace=4,monitor:HDMI-A-1
 workspace=5,monitor:HDMI-A-1
 workspace=6,monitor:HDMI-A-1
 
-# Input devices
+# Pointer configuration (Logitech G300s)
 device {
     name = logitech-g300s-optical-gaming-mouse
     sensitivity = 0.20
@@ -56,18 +66,19 @@ device {
 }
 
 # Steam window management
-
 # Keep centering the login dialog
 windowrulev2 = center, title:^Sign in to Steam$
-# And force it to workspace 1
+# Force it to workspace 1
 windowrulev2 = workspace 1, title:^Sign in to Steam$
 ```
+
+This ensures your monitor setup takes effect **after** all Omarchy defaults.
 
 ---
 
 ## ⚙️ Extra Autostart Processes
 
-These commands are executed automatically on startup to ensure each workspace is initialized and attached to its corresponding monitor.
+These commands run automatically on login to ensure workspaces attach to the correct monitors:
 
 ```ini
 # Filename: ~/.config/hypr/autostart.conf
@@ -88,10 +99,28 @@ exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
 
 ---
 
+## 🔤 Alacritty Font Size = 16
+
+Increase the global Alacritty font size by editing:
+
+```
+~/.config/alacritty/alacritty.toml
+```
+
+Add or update:
+
+```toml
+[font]
+size = 16
+```
+
+Restart Alacritty to apply.
+
+---
+
 ## 🧰 Waybar Setup
 
-The default Omarchy Waybar configuration supports five workspaces.
-This setup updates the `persistent-workspaces` array to support **six workspaces**, matching the dual-monitor Hyprland layout.
+Update the default Omarchy Waybar config to support **six workspaces**:
 
 ```jsonc
 # Filename: ~/.config/waybar/config.jsonc
@@ -106,40 +135,28 @@ This setup updates the `persistent-workspaces` array to support **six workspaces
 }
 ```
 
----
-
-## 🔤 Alacritty Font Size = 16
-
-To increase the font size globally in Alacritty to **16**, edit:
-
-```
-~/.config/alacritty/alacritty.toml
-```
-
-Add or update these lines:
-
-```toml
-[font]
-size = 16
-```
-
-If the `[font]` block already exists, just change the `size` value.
-
-This applies instantly after you reopen Alacritty.
+This keeps Waybar aligned with Hyprland.
 
 ---
 
 ## 🎮 Gaming Support
 
-Dota 2 runs best **natively**, without additional wrappers such as Gamescope or Proton.
-While these wrappers will still launch the game correctly, **secure features like matchmaking will be unavailable** — you’ll be limited to **demo mode and local lobbies** only.
-Running the native Linux version avoids this issue entirely, as **VAC verification always fails under wrappers**.
+Dota 2 runs best **natively**, without wrappers such as Gamescope or Proton.
+While wrappers still launch the game, **VAC verification fails**, meaning **no matchmaking**, only demo mode and local lobbies.
 
-### Launch Options
+### Launch Options (Native Vulkan)
+
+Use this inside Steam > Dota 2 > Properties > Launch Options:
 
 ```bash
 SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
+
+**Meaning of flags:**
+
+* `-console` → Enables developer console
+* `-novid` → Skip intro video
+* `-safe` → Safe boot in case of bad configs
 
 ---
 
@@ -151,7 +168,7 @@ SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/i
 sudo pacman -S steam
 ```
 
-### Brave (AUR)
+### Brave Browser (AUR)
 
 ```bash
 yay -S brave-bin
@@ -162,6 +179,4 @@ yay -S brave-bin
 **Author:** Luis Vásquez
 
 ---
-
-If you want, I can also add screenshots, file tree, or a “quick install” script for your repo.
 
