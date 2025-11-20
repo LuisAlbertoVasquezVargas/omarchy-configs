@@ -66,10 +66,12 @@ device {
 }
 
 # Steam window management
-# Keep centering the login dialog
+# Steam login dialog
 windowrulev2 = center, title:^Sign in to Steam$
-# Force it to workspace 1
 windowrulev2 = workspace 1, title:^Sign in to Steam$
+
+# Dota 2: always open in workspace 1
+windowrulev2 = workspace 1, class:^dota2$
 ```
 
 This ensures your monitor setup takes effect **after** all Omarchy defaults.
