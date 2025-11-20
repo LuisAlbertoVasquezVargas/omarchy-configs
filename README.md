@@ -1,4 +1,6 @@
 
+---
+
 # 🜲 Omarchy Configs
 
 Omarchy configs for **dual-monitor setups with Dota 2 support and matchmaking enabled**.
@@ -40,7 +42,7 @@ monitor=HDMI-A-1,1366x768@60,2560x0,1
 
 ## 🧩 Append These Lines to the End of hyprland.conf
 
-To activate workspace distribution, mouse settings, and Steam window rules, **append the following lines at the end of**:
+To activate workspace distribution, mouse settings, and Steam/Dota window rules, **append the following lines at the end of**:
 
 ```
 ~/.config/hypr/hyprland.conf
@@ -66,21 +68,20 @@ device {
 }
 
 # Steam window management
-# Steam login dialog
 windowrulev2 = center, title:^Sign in to Steam$
 windowrulev2 = workspace 1, title:^Sign in to Steam$
 
-# Dota 2: always open in workspace 1
+# Dota 2 always on workspace 1
 windowrulev2 = workspace 1, class:^dota2$
 ```
 
-This ensures your monitor setup takes effect **after** all Omarchy defaults.
+This ensures your layout overrides Omarchy defaults and stays consistent on every boot.
 
 ---
 
 ## ⚙️ Extra Autostart Processes
 
-These commands run automatically on login to ensure workspaces attach to the correct monitors:
+These commands run on login to ensure workspaces attach to the correct monitors:
 
 ```ini
 # Filename: ~/.config/hypr/autostart.conf
@@ -143,22 +144,22 @@ This keeps Waybar aligned with Hyprland.
 
 ## 🎮 Gaming Support
 
-Dota 2 runs best **natively**, without wrappers such as Gamescope or Proton.
-While wrappers still launch the game, **VAC verification fails**, meaning **no matchmaking**, only demo mode and local lobbies.
+Dota 2 runs best **natively**, without wrappers like Gamescope or Proton.
+While wrappers may launch the game, **VAC verification fails**, meaning **no matchmaking**, only demo mode and local lobbies.
 
 ### Launch Options (Native Vulkan)
 
-Use this inside Steam > Dota 2 > Properties > Launch Options:
+Use inside Steam:
 
 ```bash
 SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
 
-**Meaning of flags:**
+**Meaning of flags**
 
-* `-console` → Enables developer console
-* `-novid` → Skip intro video
-* `-safe` → Safe boot in case of bad configs
+* `-console` → enable developer console
+* `-novid` → skip intro
+* `-safe` → safe mode for recoveries
 
 ---
 
@@ -175,6 +176,27 @@ sudo pacman -S steam
 ```bash
 yay -S brave-bin
 ```
+
+### After installing Brave
+
+#### **1. Set Brave as the default browser**
+
+When you launch Brave for the **first time**, it shows a setup screen with a **“Make default browser”** button.
+Click it — done.
+
+#### **2. Change the default search engine to Google (Normal + Private windows)**
+
+Inside Brave:
+
+1. Open the **Brave menu** (top-right).
+2. Go to **Settings**.
+3. Select **Search engine** in the left sidebar.
+4. Set:
+
+   * **Normal Window → Google**
+   * **Private Window → Google**
+
+This matches Brave’s UI and ensures consistent search behavior everywhere.
 
 ---
 
