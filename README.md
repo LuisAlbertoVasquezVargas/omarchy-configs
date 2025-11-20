@@ -1,11 +1,11 @@
 
 # 🜲 Omarchy Configs
 
-Omarchy configs for **dual monitor setups with Dota 2 support and matchmaking enabled**.  
+Omarchy configs for **dual monitor setups with Dota 2 support and matchmaking enabled**.
 These are my personal system and UI configuration files, tuned for a fast, minimal workflow and reliable gaming experience on Omarchy OS.
 
-**Motivation:**  
-After experimenting with various Wayland setups, I wanted a stable configuration that handles dual monitors cleanly, feels consistent with Windows pointer precision, and allows Dota 2 matchmaking to work natively without VAC issues.  
+**Motivation:**
+After experimenting with various Wayland setups, I wanted a stable configuration that handles dual monitors cleanly, feels consistent with Windows pointer precision, and allows Dota 2 matchmaking to work natively without VAC issues.
 This setup was built and tested on an **AMD Ryzen 7 5700X** paired with an **NVIDIA GeForce GTX 1650 SUPER**, aiming to keep Omarchy lightweight yet polished — ready for both productivity and competitive gaming.
 
 ---
@@ -13,16 +13,17 @@ This setup was built and tested on an **AMD Ryzen 7 5700X** paired with an **NVI
 ## 🧭 Overview
 
 Optimized for:
-- Dual display (`DP-1` main + `HDMI-A-1` secondary)
-- 6 workspaces distributed evenly across both monitors
-- NVIDIA Vulkan environment for Dota 2 matchmaking stability
-- Brave browser and Steam integration for daily use and gaming
+
+* Dual display (`DP-1` main + `HDMI-A-1` secondary)
+* 6 workspaces distributed evenly across both monitors
+* NVIDIA Vulkan environment for Dota 2 matchmaking stability
+* Brave browser and Steam integration for daily use and gaming
 
 ---
 
 ## 🖥️ Dual Monitor Configuration
 
-This replaces the default single-monitor Omarchy layout with a **two-display setup** and six workspace assignments.  
+This replaces the default single-monitor Omarchy layout with a **two-display setup** and six workspace assignments.
 The main display (`DP-1`) runs at **2560×1440 @ 120 Hz**, and the secondary (`HDMI-A-1`) runs at **1366×768 @ 60 Hz**, positioned to the right.
 
 ```ini
@@ -30,7 +31,7 @@ The main display (`DP-1`) runs at **2560×1440 @ 120 Hz**, and the secondary (`H
 
 monitor=DP-1,2560x1440@120,0x0,1
 monitor=HDMI-A-1,1366x768@60,2560x0,1
-````
+```
 
 Workspaces are explicitly mapped in the main Hyprland config:
 
@@ -61,9 +62,6 @@ windowrulev2 = center, title:^Sign in to Steam$
 # And force it to workspace 1
 windowrulev2 = workspace 1, title:^Sign in to Steam$
 ```
-
-The input device section fine-tunes pointer behavior for the **Logitech G300s** mouse.
-This setup approximates the feel of **Windows “pointer speed = 13” with “Enhance pointer precision = enabled”**, giving smoother tracking and similar cursor acceleration under Hyprland.
 
 ---
 
@@ -108,7 +106,26 @@ This setup updates the `persistent-workspaces` array to support **six workspaces
 }
 ```
 
-This ensures all six workspaces are consistently displayed in the Waybar interface.
+---
+
+## 🔤 Alacritty Font Size = 16
+
+To increase the font size globally in Alacritty to **16**, edit:
+
+```
+~/.config/alacritty/alacritty.toml
+```
+
+Add or update these lines:
+
+```toml
+[font]
+size = 16
+```
+
+If the `[font]` block already exists, just change the `size` value.
+
+This applies instantly after you reopen Alacritty.
 
 ---
 
@@ -120,37 +137,31 @@ Running the native Linux version avoids this issue entirely, as **VAC verificati
 
 ### Launch Options
 
-Use these launch options in your Steam game settings to ensure Vulkan compatibility and safe startup:
-
 ```bash
 SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
-
-**Explanation of flags**
-
-* **`-console`** → Enables the developer console inside Dota 2 for custom commands or diagnostics.
-* **`-novid`** → Skips the Valve intro video during launch, speeding up startup time.
-* **`-safe`** → Launches the game in safe mode, using default settings to recover from crashes or bad configs.
 
 ---
 
 ## 💿 Installing Steam and Brave
 
-### Steam (from official Arch repositories)
+### Steam (official repo)
 
 ```bash
 sudo pacman -S steam
 ```
 
-### Brave Browser (via AUR)
+### Brave (AUR)
 
 ```bash
 yay -S brave-bin
 ```
 
-Once installed, both integrate seamlessly under Omarchy and Wayland.
-
 ---
 
 **Author:** Luis Vásquez
+
+---
+
+If you want, I can also add screenshots, file tree, or a “quick install” script for your repo.
 
