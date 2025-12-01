@@ -25,11 +25,13 @@ Optimized for:
 
 ## 🖥️ Dual Monitor Configuration
 
-Create your monitor layout in:
+Open:
 
+```bash
+nvim ~/.config/hypr/monitors.conf
 ```
-~/.config/hypr/monitors.conf
-```
+
+Add:
 
 ```ini
 # Filename: ~/.config/hypr/monitors.conf
@@ -38,15 +40,23 @@ monitor=DP-1,2560x1440@120,0x0,1
 monitor=HDMI-A-1,1366x768@60,2560x0,1
 ```
 
+Reload Hyprland to apply:
+
+```bash
+hyprctl reload
+```
+
 ---
 
 ## 🧩 Append These Lines to the End of hyprland.conf
 
-To activate workspace distribution, mouse settings, and Steam/Dota window rules, **append the following lines at the end of**:
+Open:
 
+```bash
+nvim ~/.config/hypr/hyprland.conf
 ```
-~/.config/hypr/hyprland.conf
-```
+
+Append:
 
 ```ini
 # Workspace assignments
@@ -75,13 +85,23 @@ windowrulev2 = workspace 1, title:^Sign in to Steam$
 windowrulev2 = workspace 1, class:^dota2$
 ```
 
-This ensures your layout overrides Omarchy defaults and stays consistent on every boot.
+Reload Hyprland:
+
+```bash
+hyprctl reload
+```
 
 ---
 
 ## ⚙️ Extra Autostart Processes
 
-These commands run on login to ensure workspaces attach to the correct monitors:
+Open:
+
+```bash
+nvim ~/.config/hypr/autostart.conf
+```
+
+Add:
 
 ```ini
 # Filename: ~/.config/hypr/autostart.conf
@@ -100,14 +120,20 @@ exec = hyprctl dispatch workspace 6
 exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
 ```
 
+Reload Hyprland:
+
+```bash
+hyprctl reload
+```
+
 ---
 
 ## 🔤 Alacritty Font Size = 16
 
-Increase the global Alacritty font size by editing:
+Open:
 
-```
-~/.config/alacritty/alacritty.toml
+```bash
+nvim ~/.config/alacritty/alacritty.toml
 ```
 
 Add or update:
@@ -123,11 +149,15 @@ Restart Alacritty to apply.
 
 ## 🧰 Waybar Setup
 
-Update the default Omarchy Waybar config to support **six workspaces**:
+Open:
+
+```bash
+nvim ~/.config/waybar/config.jsonc
+```
+
+Add:
 
 ```jsonc
-# Filename: ~/.config/waybar/config.jsonc
-
 "persistent-workspaces": {
   "1": [],
   "2": [],
@@ -138,7 +168,7 @@ Update the default Omarchy Waybar config to support **six workspaces**:
 }
 ```
 
-This keeps Waybar aligned with Hyprland.
+Restart Waybar or log out/in to apply.
 
 ---
 
@@ -149,13 +179,13 @@ While wrappers may launch the game, **VAC verification fails**, meaning **no mat
 
 ### Launch Options (Native Vulkan)
 
-Use inside Steam:
+Set inside Steam:
 
 ```bash
 SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
 ```
 
-**Meaning of flags**
+**Meaning of flags:**
 
 * `-console` → enable developer console
 * `-novid` → skip intro
@@ -181,22 +211,14 @@ yay -S brave-bin
 
 #### **1. Set Brave as the default browser**
 
-When you launch Brave for the **first time**, it shows a setup screen with a **“Make default browser”** button.
-Click it — done.
+On first launch → click **Make default browser**.
 
-#### **2. Change the default search engine to Google (Normal + Private windows)**
+#### **2. Change the default search engine (normal + private)**
 
-Inside Brave:
-
-1. Open the **Brave menu** (top-right).
-2. Go to **Settings**.
-3. Select **Search engine** in the left sidebar.
-4. Set:
-
-   * **Normal Window → Google**
-   * **Private Window → Google**
-
-This matches Brave’s UI and ensures consistent search behavior everywhere.
+1. Open Brave
+2. Settings
+3. Search engine
+4. Set both to **Google**
 
 ---
 
