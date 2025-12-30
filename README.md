@@ -29,7 +29,7 @@ Open:
 
 ```bash
 nvim ~/.config/hypr/monitors.conf
-```
+````
 
 Add:
 
@@ -174,6 +174,12 @@ Restart Waybar or log out/in to apply.
 
 ## 🎮 Gaming Support
 
+Native Linux gaming focused on stability, correct input scaling, and compatibility with Hyprland.
+
+---
+
+## 🎯 Dota 2 (Native Vulkan, Matchmaking Enabled)
+
 Dota 2 runs best **natively**, without wrappers like Gamescope or Proton.
 While wrappers may launch the game, **VAC verification fails**, meaning **no matchmaking**, only demo mode and local lobbies.
 
@@ -190,6 +196,29 @@ SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/i
 * `-console` → enable developer console
 * `-novid` → skip intro
 * `-safe` → safe mode for recoveries
+
+---
+
+## 🧟 Left 4 Dead 2 (Native, X11)
+
+Left 4 Dead 2 works best when **forcing X11**, avoiding Gamescope and borderless hacks.
+This configuration launches cleanly, uses the correct monitor resolution, and avoids broken input scaling under Wayland.
+
+### Launch Options
+
+Set inside Steam:
+
+```bash
+SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
+```
+
+**Notes:**
+
+* Game may initially show the Waybar
+* Toggle real fullscreen with **SUPER + F**
+* Once fullscreen, input scaling and clicks behave correctly
+* No window positioning flags required
+* Stable across launches
 
 ---
 
