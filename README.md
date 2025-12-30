@@ -182,7 +182,7 @@ While wrappers may launch the game, **VAC verification fails**, meaning **no mat
 Set inside Steam:
 
 ```bash
-SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid -safe
+SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
 ```
 
 **Meaning of flags:**
