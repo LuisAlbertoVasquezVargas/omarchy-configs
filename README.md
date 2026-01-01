@@ -29,7 +29,7 @@ Open:
 
 ```bash
 nvim ~/.config/hypr/monitors.conf
-````
+```
 
 Add:
 
@@ -219,6 +219,60 @@ SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
 * Once fullscreen, input scaling and clicks behave correctly
 * No window positioning flags required
 * Stable across launches
+
+---
+
+## 🧠 StarCraft: Remastered (Steam + Proton)
+
+StarCraft: Remastered does **not** have a native Linux build.
+The most reliable way to run it on Omarchy is **Steam + Proton Experimental**.
+
+Attempts via Lutris or standalone Wine are significantly less stable due to Battle.net agent issues.
+
+### Installation Steps
+
+1. Download the **Battle.net Windows installer**:
+
+   ```
+   https://www.blizzard.com/download
+   ```
+
+2. In Steam:
+
+   * Add the installer as a **Non-Steam Game**
+   * Force compatibility → **Proton Experimental**
+
+3. Launch the installer and install **Battle.net**
+
+4. Inside Battle.net:
+
+   * Log in
+   * Install **StarCraft: Remastered**
+   * Keep the Battle.net window visible during download (do not minimize)
+
+> Proton Experimental is required during installation.
+> Other Proton versions may cause Battle.net downloads to freeze.
+
+### Launch Options (Recommended)
+
+Set in **Steam → StarCraft: Remastered → Properties → Launch Options**:
+
+```bash
+PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
+```
+
+### After Installation
+
+* Proton Experimental can be kept, or
+* Switched to a stable Proton version (e.g. Proton 9.0)
+
+SC:R runs smoothly once installed.
+
+### Notes
+
+* Battle.net is only required for installation and updates
+* SC:R performance is stable under Wayland + NVIDIA
+* No additional in-game configuration required
 
 ---
 
