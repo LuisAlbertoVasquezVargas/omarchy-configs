@@ -1,6 +1,3 @@
-
----
-
 # 🜲 Omarchy Configs
 
 Omarchy configs for **dual-monitor setups with Dota 2 support and matchmaking enabled**.
@@ -128,22 +125,25 @@ hyprctl reload
 
 ---
 
-## 🔤 Alacritty Font Size = 16
+## 🔤 Ghostty (Default Terminal on Recent Omarchy)
+
+Recent Omarchy versions **replaced Alacritty with Ghostty** as the default terminal emulator.
+
+### Font Size
 
 Open:
 
 ```bash
-nvim ~/.config/alacritty/alacritty.toml
+nvim ~/.config/ghostty/config
 ```
 
-Add or update:
+Set:
 
-```toml
-[font]
-size = 16
+```ini
+font-size = 16
 ```
 
-Restart Alacritty to apply.
+Close all terminal windows and open a new one to apply.
 
 ---
 
@@ -268,12 +268,6 @@ PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
 
 SC:R runs smoothly once installed.
 
-### Notes
-
-* Battle.net is only required for installation and updates
-* SC:R performance is stable under Wayland + NVIDIA
-* No additional in-game configuration required
-
 ---
 
 ## 💿 Installing Steam and Brave
@@ -306,6 +300,4 @@ On first launch → click **Make default browser**.
 ---
 
 **Author:** Luis Vásquez
-
----
 
