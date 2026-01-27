@@ -56,30 +56,56 @@ nvim ~/.config/hypr/hyprland.conf
 Append:
 
 ```ini
-# Workspace assignments
-# Primary monitor (DP-1): workspaces 1–3
+# -----------------------------
+# Workspaces assignment
+# -----------------------------
 workspace=1,monitor:DP-1
 workspace=2,monitor:DP-1
 workspace=3,monitor:DP-1
-
-# Secondary monitor (HDMI-A-1): workspaces 4–6
 workspace=4,monitor:HDMI-A-1
 workspace=5,monitor:HDMI-A-1
 workspace=6,monitor:HDMI-A-1
 
-# Pointer configuration (Logitech G300s)
+# -----------------------------
+# Steam window rules (block-style)
+# -----------------------------
+windowrule {
+    name = steam-main
+    workspace = 1
+    match:class = ^steam$
+    match:initial_title = Steam
+    float = on
+    center = true
+}
+
+windowrule {
+    name = steam-signin
+    workspace = 1
+    match:initial_title = ^Sign in to Steam$
+    float = on
+    center = true
+}
+
+# -----------------------------
+# Dota 2 window
+# -----------------------------
+windowrule {
+    name = dota2-main
+    workspace = 1
+    match:class = ^dota2$
+    fullscreen = on
+    float = on
+    monitor = DP-1
+}
+
+# -----------------------------
+# Pointer configuration (example)
+# -----------------------------
 device {
     name = logitech-g300s-optical-gaming-mouse
     sensitivity = 0.20
     accel_profile = adaptative
 }
-
-# Steam window management
-windowrulev2 = center, title:^Sign in to Steam$
-windowrulev2 = workspace 1, title:^Sign in to Steam$
-
-# Dota 2 always on workspace 1
-windowrulev2 = workspace 1, class:^dota2$
 ```
 
 Reload Hyprland:
