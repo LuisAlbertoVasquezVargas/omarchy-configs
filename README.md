@@ -1,179 +1,38 @@
-# 🜲 Omarchy Configs
+# 🜲 Omarchy Laptop Config
 
-Omarchy configs for **dual-monitor setups with Dota 2 support and matchmaking enabled**.
-These are my personal system and UI configuration files, tuned for a fast, minimal workflow and reliable gaming experience on Omarchy OS.
-
-**Motivation:**
-After experimenting with various Wayland setups, I wanted a stable configuration that handles dual monitors cleanly, feels consistent with Windows pointer precision, and allows Dota 2 matchmaking to work natively without VAC issues.
-This setup was built and tested on an **AMD Ryzen 7 5700X** paired with an **NVIDIA GeForce GTX 1650 SUPER**, aiming to keep Omarchy lightweight yet polished — ready for both productivity and competitive gaming.
+Minimal Omarchy setup focused on **stability, gaming, and daily productivity** on a single-display laptop.
 
 ---
 
-## 🧭 Overview
+## 📦 Clone Repository
 
-Optimized for:
+```bash
+git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs-laptop.git
+cd omarchy-configs-laptop
+```
 
-* Dual display (`DP-1` main + `HDMI-A-1` secondary)
-* 6 workspaces distributed evenly across both monitors
-* NVIDIA Vulkan environment for Dota 2 matchmaking stability
-* Brave browser and Steam integration for daily use and gaming
+> Copy the configs manually into your `~/.config` directory as needed.
 
 ---
 
-## 🖥️ Dual Monitor Configuration
+## 🧭 Core Components
 
-Open:
+Main tools used in this setup:
 
-```bash
-nvim ~/.config/hypr/monitors.conf
-```
-
-Add:
-
-```ini
-# Filename: ~/.config/hypr/monitors.conf
-
-monitor=DP-1,2560x1440@120,0x0,1
-monitor=HDMI-A-1,1366x768@60,2560x0,1
-```
-
-Reload Hyprland to apply:
-
-```bash
-hyprctl reload
-```
+* **Hyprland** → Wayland compositor
+* **Waybar** → status bar
+* **Ghostty** → terminal emulator
+* **Brave** → default browser
+* **Ferdium** → messaging hub (WhatsApp Web, etc.)
+* **Steam** → gaming platform
 
 ---
 
-## 🧩 Append These Lines to the End of hyprland.conf
+## 🧰 Waybar
 
-Open:
+Waybar is used as the main status bar.
 
-```bash
-nvim ~/.config/hypr/hyprland.conf
-```
-
-Append:
-
-```ini
-# -----------------------------
-# Workspaces assignment
-# -----------------------------
-workspace=1,monitor:DP-1
-workspace=2,monitor:DP-1
-workspace=3,monitor:DP-1
-workspace=4,monitor:HDMI-A-1
-workspace=5,monitor:HDMI-A-1
-workspace=6,monitor:HDMI-A-1
-
-# -----------------------------
-# Steam window rules (block-style)
-# -----------------------------
-windowrule {
-    name = steam-main
-    workspace = 1
-    match:class = ^steam$
-    match:initial_title = Steam
-    float = on
-    center = true
-}
-
-windowrule {
-    name = steam-signin
-    workspace = 1
-    match:initial_title = ^Sign in to Steam$
-    float = on
-    center = true
-}
-
-# -----------------------------
-# Dota 2 window
-# -----------------------------
-windowrule {
-    name = dota2-main
-    workspace = 1
-    match:class = ^dota2$
-    fullscreen = on
-    float = on
-    monitor = DP-1
-}
-
-# -----------------------------
-# Pointer configuration (example)
-# -----------------------------
-device {
-    name = logitech-g300s-optical-gaming-mouse
-    sensitivity = 0.20
-    accel_profile = adaptative
-}
-```
-
-Reload Hyprland:
-
-```bash
-hyprctl reload
-```
-
----
-
-## ⚙️ Extra Autostart Processes
-
-Open:
-
-```bash
-nvim ~/.config/hypr/autostart.conf
-```
-
-Add:
-
-```ini
-# Filename: ~/.config/hypr/autostart.conf
-
-exec = hyprctl dispatch workspace 1
-exec = hyprctl dispatch movetoworkspace 1,DP-1
-exec = hyprctl dispatch workspace 2
-exec = hyprctl dispatch movetoworkspace 2,DP-1
-exec = hyprctl dispatch workspace 3
-exec = hyprctl dispatch movetoworkspace 3,DP-1
-exec = hyprctl dispatch workspace 4
-exec = hyprctl dispatch movetoworkspace 4,HDMI-A-1
-exec = hyprctl dispatch workspace 5
-exec = hyprctl dispatch movetoworkspace 5,HDMI-A-1
-exec = hyprctl dispatch workspace 6
-exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
-```
-
-Reload Hyprland:
-
-```bash
-hyprctl reload
-```
-
----
-
-## 🔤 Ghostty (Default Terminal on Recent Omarchy)
-
-Recent Omarchy versions **replaced Alacritty with Ghostty** as the default terminal emulator.
-
-### Font Size
-
-Open:
-
-```bash
-nvim ~/.config/ghostty/config
-```
-
-Set:
-
-```ini
-font-size = 16
-```
-
-Close all terminal windows and open a new one to apply.
-
----
-
-## 🧰 Waybar Setup
+### Config
 
 Open:
 
@@ -181,7 +40,7 @@ Open:
 nvim ~/.config/waybar/config.jsonc
 ```
 
-Add:
+Ensure persistent workspaces:
 
 ```jsonc
 "persistent-workspaces": {
@@ -194,134 +53,198 @@ Add:
 }
 ```
 
-Restart Waybar or log out/in to apply.
-
----
-
-## 🎮 Gaming Support
-
-Native Linux gaming focused on stability, correct input scaling, and compatibility with Hyprland.
-
----
-
-## 🎯 Dota 2 (Native Vulkan, Matchmaking Enabled)
-
-Dota 2 runs best **natively**, without wrappers like Gamescope or Proton.
-While wrappers may launch the game, **VAC verification fails**, meaning **no matchmaking**, only demo mode and local lobbies.
-
-### Launch Options (Native Vulkan)
-
-Set inside Steam:
+### Reload
 
 ```bash
-SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
+pkill waybar
+hyprctl dispatch exec waybar
 ```
-
-**Meaning of flags:**
-
-* `-console` → enable developer console
-* `-novid` → skip intro
-* `-safe` → safe mode for recoveries
 
 ---
 
-## 🧟 Left 4 Dead 2 (Native, X11)
+## 🔤 Ghostty (Terminal)
 
-Left 4 Dead 2 works best when **forcing X11**, avoiding Gamescope and borderless hacks.
-This configuration launches cleanly, uses the correct monitor resolution, and avoids broken input scaling under Wayland.
+Default terminal for this setup.
 
-### Launch Options
-
-Set inside Steam:
+Open:
 
 ```bash
-SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
+nvim ~/.config/ghostty/config
 ```
 
-**Notes:**
+Set:
 
-* Game may initially show the Waybar
-* Toggle real fullscreen with **SUPER + F**
-* Once fullscreen, input scaling and clicks behave correctly
-* No window positioning flags required
-* Stable across launches
+```ini
+font-size = 14
+```
 
 ---
 
-## 🧠 StarCraft: Remastered (Steam + Proton)
+## 🌐 Brave Browser
 
-StarCraft: Remastered does **not** have a native Linux build.
-The most reliable way to run it on Omarchy is **Steam + Proton Experimental**.
-
-Attempts via Lutris or standalone Wine are significantly less stable due to Battle.net agent issues.
-
-### Installation Steps
-
-1. Download the **Battle.net Windows installer**:
-
-   ```
-   https://www.blizzard.com/download
-   ```
-
-2. In Steam:
-
-   * Add the installer as a **Non-Steam Game**
-   * Force compatibility → **Proton Experimental**
-
-3. Launch the installer and install **Battle.net**
-
-4. Inside Battle.net:
-
-   * Log in
-   * Install **StarCraft: Remastered**
-   * Keep the Battle.net window visible during download (do not minimize)
-
-> Proton Experimental is required during installation.
-> Other Proton versions may cause Battle.net downloads to freeze.
-
-### Launch Options (Recommended)
-
-Set in **Steam → StarCraft: Remastered → Properties → Launch Options**:
-
-```bash
-PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
-```
-
-### After Installation
-
-* Proton Experimental can be kept, or
-* Switched to a stable Proton version (e.g. Proton 9.0)
-
-SC:R runs smoothly once installed.
-
----
-
-## 💿 Installing Steam and Brave
-
-### Steam (official repo)
-
-```bash
-sudo pacman -S steam
-```
-
-### Brave Browser (AUR)
+### Install
 
 ```bash
 yay -S brave-bin
 ```
 
-### After installing Brave
-
-#### **1. Set Brave as the default browser**
-
-On first launch → click **Make default browser**.
-
-#### **2. Change the default search engine (normal + private)**
+### Setup
 
 1. Open Brave
-2. Settings
-3. Search engine
-4. Set both to **Google**
+2. Set as default browser
+3. Go to settings → search engine
+4. Set:
+
+   * Normal: Google
+   * Private: Google
+
+---
+
+## 💬 Ferdium (WhatsApp + Messaging)
+
+Ferdium is used to centralize messaging apps like **WhatsApp Web**, avoiding phone dependency and browser tab clutter.
+
+### Install
+
+```bash
+yay -S ferdium-bin
+```
+
+### Setup
+
+1. Open Ferdium
+2. Add service → **WhatsApp**
+3. Scan QR code
+4. (Optional) Add:
+
+   * Telegram
+   * Discord
+   * Slack
+
+---
+
+## 🎮 Steam
+
+### Install
+
+```bash
+sudo pacman -S steam
+```
+
+---
+
+## 🎯 Dota 2 (Native + Matchmaking Enabled)
+
+Dota 2 is configured to run **natively using Vulkan**.
+
+⚠️ Do NOT use:
+
+* Gamescope
+* Proton
+* Any wrapper
+
+These break **VAC matchmaking**.
+
+---
+
+### Launch Options
+
+Set in Steam:
+
+```bash
+SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 %command% -console -novid
+```
+
+---
+
+### Notes
+
+* `-novid` → skips intro
+* `-console` → enables developer console
+* Native Vulkan ensures:
+
+  * Proper input scaling
+  * Stable FPS
+  * Matchmaking enabled
+
+---
+
+## ⚙️ Hyprland (Base Behavior)
+
+Minimal assumptions, no forced layouts.
+
+Open:
+
+```bash
+nvim ~/.config/hypr/hyprland.conf
+```
+
+Suggested baseline:
+
+```ini
+# =============================
+# Steam (ALL windows controlled)
+# =============================
+
+windowrule {
+    name = steam-all
+    match:class = ^steam.*$
+    workspace = 1
+    float = on
+    center = on
+}
+
+windowrule {
+    name = steam-title-fallback
+    match:title = ^(Steam|Updating|Working|Loading).*
+    workspace = 1
+    float = on
+    center = on
+}
+
+# =============================
+# Dota 2 (launched via Steam)
+# =============================
+
+windowrule {
+    name = dota2-main
+    match:class = ^(steam_app_570|dota2)$
+    workspace = 1
+    fullscreen = on
+    no_anim = on
+}
+
+# -----------------------------
+# Pointer configuration (example)
+# -----------------------------
+device {
+    name = logitech-g300s-optical-gaming-mouse
+    sensitivity = 0.20
+    accel_profile = adaptative
+}
+```
+
+Reload:
+
+```bash
+hyprctl reload
+```
+
+---
+
+## 🧠 Philosophy
+
+This setup avoids:
+
+* Hardcoded monitor layouts
+* Overcomplicated automation
+* Wayland wrappers that break games
+
+Focus is on:
+
+* Stability
+* Predictability
+* Native performance
 
 ---
 
