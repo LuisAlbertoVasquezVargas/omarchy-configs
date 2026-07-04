@@ -78,7 +78,7 @@ Main tools used in this setup:
 
 * **Hyprland** → Wayland compositor
 * **Waybar** → status bar
-* **Ghostty** → default terminal on recent Omarchy versions
+* **Alacritty** → terminal emulator
 * **Brave** → default browser
 * **Steam** → gaming platform
 * **NVIDIA Vulkan** → native gaming support
@@ -140,7 +140,8 @@ Ensure persistent workspaces:
   "3": [],
   "4": [],
   "5": [],
-  "6": []
+  "6": [],
+  "7": []
 }
 ```
 
@@ -153,24 +154,25 @@ hyprctl dispatch exec waybar
 
 ---
 
-## 🔤 Ghostty
+## 🔤 Alacritty
 
-Recent Omarchy versions use Ghostty as the default terminal emulator.
+Current system default terminal, based on `~/.config/xdg-terminals.list`.
 
 ### Config
 
 Open:
 
 ```bash
-nvim ~/.config/ghostty/config
+nvim ~/.config/alacritty/alacritty.toml
 ```
 
 ### Font Size
 
-Set:
+Locate or add:
 
-```ini
-font-size = 16
+```toml
+[font]
+size = 13.0
 ```
 
 Close all terminal windows and open a new one to apply the change.
@@ -179,9 +181,9 @@ Close all terminal windows and open a new one to apply the change.
 
 ## ⚙️ Hyprland
 
-This configuration assigns six workspaces across two monitors.
+This configuration assigns seven workspaces across two monitors.
 
-* Workspaces `1`, `2`, `3` → `DP-1`
+* Workspaces `1`, `2`, `3`, `7` → `DP-1`
 * Workspaces `4`, `5`, `6` → `HDMI-A-1`
 
 ### Config
@@ -205,6 +207,7 @@ workspace=3,monitor:DP-1
 workspace=4,monitor:HDMI-A-1
 workspace=5,monitor:HDMI-A-1
 workspace=6,monitor:HDMI-A-1
+workspace=7,monitor:DP-1
 
 windowrule {
     name = steam-all
@@ -284,6 +287,8 @@ exec = hyprctl dispatch workspace 5
 exec = hyprctl dispatch movetoworkspace 5,HDMI-A-1
 exec = hyprctl dispatch workspace 6
 exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
+exec = hyprctl dispatch workspace 7
+exec = hyprctl dispatch movetoworkspace 7,DP-1
 ```
 
 ### Reload
@@ -299,7 +304,7 @@ hyprctl reload
 ### Install
 
 ```bash
-sudo pacman -S --needed --noconfirm steam lib32-nvidia-utils
+sudo pacman -S steam
 ```
 
 If prompted to choose a provider for `lib32-vulkan-driver`, choose the NVIDIA provider.
@@ -433,4 +438,3 @@ source ~/.bashrc
 ## 👤 Author
 
 Luis Vásquez
-
