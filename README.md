@@ -299,7 +299,7 @@ hyprctl reload
 ### Install
 
 ```bash
-sudo pacman -S steam
+sudo pacman -S --needed --noconfirm steam lib32-nvidia-utils
 ```
 
 If prompted to choose a provider for `lib32-vulkan-driver`, choose the NVIDIA provider.
