@@ -19,14 +19,6 @@ This configuration is optimized for:
 * **Main display:** `DP-1`
 * **Secondary display:** `HDMI-A-1`
 
-Verify your local setup with:
-
-```bash
-omarchy-fetch
-fastfetch
-hyprctl monitors
-```
-
 ---
 
 ## 🌐 Brave Browser
@@ -35,24 +27,44 @@ hyprctl monitors
 
 ```bash
 yay -S brave-bin --noconfirm
-```
+````
 
 ### Setup
 
 1. Open Brave
 2. Set it as the default browser
-3. Go to settings → search engine
+3. Go to Settings → Search engine
 4. Set:
 
    * Normal: Google
    * Private: Google
-5. Enable dark theme
+5. Go to Settings → Appearance → Theme, then select **Dark**
+
+---
+
+## 💬 Ferdium
+
+Ferdium is used to centralize messaging services such as WhatsApp, Telegram, Discord, and Slack.
+
+### Install
+
+```bash
+sudo pacman -S --needed --noconfirm flatpak
+flatpak install --noninteractive flathub org.ferdium.Ferdium
+```
+
+### Setup
+
+1. Open Ferdium
+2. Select **Use without account**
+3. Add the desired messaging services
+4. Scan the QR code when configuring WhatsApp
 
 ---
 
 ## 🔐 GitHub Authentication
 
-Authenticate with GitHub to enable repo cloning and management:
+Authenticate with GitHub to enable repository cloning and management:
 
 ```bash
 gh auth login
@@ -72,16 +84,13 @@ cd omarchy-configs
 
 ---
 
-## 🧭 Core Components
+## 🔄 Configuration Management
 
-Main tools used in this setup:
-
-* **Hyprland** → Wayland compositor
-* **Waybar** → status bar
-* **Alacritty** → terminal emulator
-* **Brave** → default browser
-* **Steam** → gaming platform
-* **NVIDIA Vulkan** → native gaming support
+```bash
+python scripts/compare_configs.py
+python scripts/apply_configs.py
+python scripts/compare_configs.py
+```
 
 ---
 
@@ -304,10 +313,8 @@ hyprctl reload
 ### Install
 
 ```bash
-sudo pacman -S steam
+sudo pacman -S --needed --noconfirm steam
 ```
-
-If prompted to choose a provider for `lib32-vulkan-driver`, choose the NVIDIA provider.
 
 ---
 
@@ -413,28 +420,7 @@ PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
 
 ---
 
-## 🧪 Optional Shell Alias
-
-Add the project push alias:
-
-```bash
-nvim ~/.bashrc
-```
-
-Add:
-
-```bash
-alias gpm="git push origin main"
-```
-
-Reload:
-
-```bash
-source ~/.bashrc
-```
-
----
-
 ## 👤 Author
 
 Luis Vásquez
+
