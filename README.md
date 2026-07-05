@@ -27,7 +27,7 @@ This configuration is optimized for:
 
 ```bash
 yay -S brave-bin --noconfirm
-````
+```
 
 ### Setup
 
@@ -35,10 +35,10 @@ yay -S brave-bin --noconfirm
 2. Set it as the default browser
 3. Go to Settings → Search engine
 4. Set:
-
    * Normal: Google
    * Private: Google
-5. Go to Settings → Appearance → Theme, then select **Dark**
+5. Go to Settings → Appearance → Theme
+6. Select **Dark**
 
 ---
 
@@ -138,6 +138,21 @@ Open:
 nvim ~/.config/waybar/config.jsonc
 ```
 
+### Clock
+
+Use the following clock configuration to display the date, weekday, and time:
+
+```jsonc
+"clock": {
+  "format": "{:L%d %B %A %H:%M}",
+  "format-alt": "{:L%d %B %A %H:%M}",
+  "tooltip": false,
+  "on-click-right": "omarchy-launch-floating-terminal-with-presentation omarchy-tz-select"
+}
+```
+
+Right-clicking the clock opens the Omarchy timezone selector.
+
 ### Persistent Workspaces
 
 Ensure persistent workspaces:
@@ -153,6 +168,8 @@ Ensure persistent workspaces:
   "7": []
 }
 ```
+
+The battery module is intentionally omitted because this configuration targets a desktop system.
 
 ### Reload
 
@@ -392,14 +409,12 @@ https://www.blizzard.com/download
 ```
 
 2. In Steam:
-
    * Add the installer as a Non-Steam Game
    * Force compatibility with Proton Experimental
 
 3. Launch the installer and install Battle.net
 
 4. Inside Battle.net:
-
    * Log in
    * Install StarCraft: Remastered
    * Keep the Battle.net window visible during download
