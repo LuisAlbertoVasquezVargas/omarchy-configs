@@ -47,6 +47,14 @@ yay -S --noconfirm brave-bin
    * Private: Google
 5. Go to Settings → Appearance → Theme
 6. Select **Dark**
+7. Go to **Settings → Sync**
+8. Select **I have a Sync Code**
+9. On your smartphone:
+   * Open Brave
+   * Go to **Settings → Sync**
+   * Select **Add a new device**
+   * Scan the QR code displayed on your desktop
+10. Wait for synchronization to complete (bookmarks, passwords, history, tabs, etc.)
 
 ---
 
