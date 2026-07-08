@@ -25,8 +25,16 @@ This configuration is optimized for:
 
 ### Install
 
+Authenticate once:
+
 ```bash
-yay -S brave-bin --noconfirm
+sudo -v
+```
+
+Then install Brave:
+
+```bash
+yay -S --noconfirm brave-bin
 ```
 
 ### Setup
@@ -35,6 +43,7 @@ yay -S brave-bin --noconfirm
 2. Set it as the default browser
 3. Go to Settings → Search engine
 4. Set:
+
    * Normal: Google
    * Private: Google
 5. Go to Settings → Appearance → Theme
@@ -86,10 +95,19 @@ cd omarchy-configs
 
 ## 🔄 Configuration Management
 
+Apply the repository configuration:
+
 ```bash
 python scripts/compare_configs.py
 python scripts/apply_configs.py
 python scripts/compare_configs.py
+```
+
+Then reload Hyprland and reboot to ensure all changes are applied:
+
+```bash
+hyprctl reload
+reboot
 ```
 
 ---
@@ -409,12 +427,14 @@ https://www.blizzard.com/download
 ```
 
 2. In Steam:
+
    * Add the installer as a Non-Steam Game
    * Force compatibility with Proton Experimental
 
 3. Launch the installer and install Battle.net
 
 4. Inside Battle.net:
+
    * Log in
    * Install StarCraft: Remastered
    * Keep the Battle.net window visible during download
