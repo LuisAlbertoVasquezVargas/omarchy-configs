@@ -483,9 +483,10 @@ Luis Vásquez
 ## Install Theme
 
 ```
-```
 omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
 ```
 
 ```
 https://omarchytheme.com/themes/ghost-pastel/
+```
+
