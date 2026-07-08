@@ -43,7 +43,6 @@ yay -S --noconfirm brave-bin
 2. Set it as the default browser
 3. Go to Settings → Search engine
 4. Set:
-
    * Normal: Google
    * Private: Google
 5. Go to Settings → Appearance → Theme
@@ -80,6 +79,23 @@ gh auth login
 ```
 
 Follow the prompts. Browser login is recommended.
+
+---
+
+## ⚡ Git Aliases
+
+Create a convenient alias for pushing to the main branch:
+
+```bash
+echo 'alias gpm="git push origin main"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+You can now push the current repository with:
+
+```bash
+gpm
+```
 
 ---
 
@@ -340,7 +356,6 @@ exec = hyprctl dispatch movetoworkspace 7,DP-1
 ```bash
 hyprctl reload
 ```
-
 ---
 
 ## 🎮 Steam
@@ -427,14 +442,12 @@ https://www.blizzard.com/download
 ```
 
 2. In Steam:
-
    * Add the installer as a Non-Steam Game
    * Force compatibility with Proton Experimental
 
 3. Launch the installer and install Battle.net
 
 4. Inside Battle.net:
-
    * Log in
    * Install StarCraft: Remastered
    * Keep the Battle.net window visible during download
@@ -458,4 +471,4 @@ PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
 ## 👤 Author
 
 Luis Vásquez
-
+```
