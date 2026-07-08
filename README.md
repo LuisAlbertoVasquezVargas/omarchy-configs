@@ -479,4 +479,13 @@ PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
 ## 👤 Author
 
 Luis Vásquez
+
+## Install Theme
+
 ```
+```
+omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
+```
+
+```
+https://omarchytheme.com/themes/ghost-pastel/
