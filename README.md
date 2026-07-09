@@ -123,7 +123,11 @@ Apply the repository configuration:
 
 ```bash
 python scripts/compare_configs.py
+```
+```bash
 python scripts/apply_configs.py
+```
+```bash
 python scripts/compare_configs.py
 ```
 
