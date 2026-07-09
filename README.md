@@ -1,496 +1,136 @@
-<!-- README.md -->
+# Omarchy Desktop Config
 
-# 🜲 Omarchy Desktop Config
+Personal Omarchy configuration for a desktop workstation focused on dual-monitor Hyprland workflow, seven persistent workspaces, desktop-oriented Waybar modules, Alacritty defaults, Steam/Dota 2 window behavior, NVIDIA Vulkan stability, Logitech G300s mouse tuning, Ferdium startup, and native Linux gaming. The tracked files under `.config/` are the single source of truth for desktop configuration; this README keeps only the setup order and manual instructions.
 
-Minimal Omarchy setup focused on **dual-monitor productivity, native Linux gaming, and NVIDIA Vulkan stability** on a desktop workstation.
+## Target System
 
-This configuration is tuned for a fast Hyprland workflow, persistent workspaces across two displays, Steam integration, and native Dota 2 matchmaking support without Proton or Gamescope.
+- OS: Omarchy
+- WM: Hyprland
+- CPU: AMD Ryzen 7 5700X
+- GPU: NVIDIA GeForce GTX 1650 SUPER
+- Main display: `DP-1`
+- Secondary display: `HDMI-A-1`
 
----
+## Setup Steps
 
-## 🛠️ System Information
+1. This repository assumes Omarchy is already installed.
 
-This configuration is optimized for:
+2. Install Brave.
 
-* **OS:** Omarchy
-* **WM:** Hyprland
-* **CPU:** AMD Ryzen 7 5700X
-* **GPU:** NVIDIA GeForce GTX 1650 SUPER
-* **Main display:** `DP-1`
-* **Secondary display:** `HDMI-A-1`
+   ```bash
+   sudo -v
+   yay -S --noconfirm brave-bin
+   ```
 
----
+   Open Brave, set it as the default browser, set Google as the normal and private search engine, select the dark theme, then connect Brave Sync from your phone with the desktop QR code.
 
-## 🌐 Brave Browser
+3. Install Ferdium.
 
-### Install
+   ```bash
+   sudo pacman -S --needed --noconfirm flatpak
+   flatpak install --noninteractive flathub org.ferdium.Ferdium
+   ```
 
-Authenticate once:
+   Open Ferdium, choose `Use without account`, add the messaging services you need, and scan the QR code for WhatsApp.
 
-```bash
-sudo -v
-```
+4. Authenticate GitHub CLI.
 
-Then install Brave:
+   ```bash
+   gh auth login
+   ```
 
-```bash
-yay -S --noconfirm brave-bin
-```
+   Use browser login when prompted.
 
-### Setup
+5. Add the Git push alias.
 
-1. Open Brave
-2. Set it as the default browser
-3. Go to Settings → Search engine
-4. Set:
-   * Normal: Google
-   * Private: Google
-5. Go to Settings → Appearance → Theme
-6. Select **Dark**
-7. Go to **Settings → Sync**
-8. Select **I have a Sync Code**
-9. On your smartphone:
-   * Open Brave
-   * Go to **Settings → Sync**
-   * Select **Add a new device**
-   * Scan the QR code displayed on your desktop
-10. Wait for synchronization to complete (bookmarks, passwords, history, tabs, etc.)
+   ```bash
+   echo 'alias gpm="git push origin main"' >> ~/.bashrc
+   source ~/.bashrc
+   ```
 
----
+6. Clone this repository.
 
-## 💬 Ferdium
+   ```bash
+   cd ~/Projects
+   git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
+   cd omarchy-configs
+   ```
 
-Ferdium is used to centralize messaging services such as WhatsApp, Telegram, Discord, and Slack.
+7. Compare the repository configs with the current system configs.
 
-### Install
+   ```bash
+   python scripts/compare_configs.py
+   ```
 
-```bash
-sudo pacman -S --needed --noconfirm flatpak
-flatpak install --noninteractive flathub org.ferdium.Ferdium
-```
+8. Apply the repository configs.
 
-### Setup
+   ```bash
+   python scripts/apply_configs.py
+   ```
 
-1. Open Ferdium
-2. Select **Use without account**
-3. Add the desired messaging services
-4. Scan the QR code when configuring WhatsApp
+   The script previews creates/replacements first and only writes after you type `yes`. Replaced files are backed up under `~/.local/state/omarchy-configs/backups/`.
 
----
+9. Compare again to confirm the files now match.
 
-## 🔐 GitHub Authentication
+    ```bash
+    python scripts/compare_configs.py
+    ```
 
-Authenticate with GitHub to enable repository cloning and management:
+10. Reload the desktop.
 
-```bash
-gh auth login
-```
+    ```bash
+    hyprctl reload
+    omarchy restart waybar
+    ```
 
-Follow the prompts. Browser login is recommended.
+    Reopen Alacritty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
 
----
+11. Install Steam.
 
-## ⚡ Git Aliases
+    ```bash
+    sudo pacman -S --needed --noconfirm steam
+    ```
 
-Create a convenient alias for pushing to the main branch:
+12. Configure Dota 2.
 
-```bash
-echo 'alias gpm="git push origin main"' >> ~/.bashrc
-source ~/.bashrc
-```
+    Use the native Linux build with Vulkan. Do not use Gamescope, Proton, Wine, or wrappers because they can break VAC verification and disable matchmaking.
 
-You can now push the current repository with:
+    Steam launch options:
 
-```bash
-gpm
-```
+    ```bash
+    SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
+    ```
 
----
+13. Configure Left 4 Dead 2.
 
-## 📦 Clone Repository
+    Force X11 to avoid broken input scaling under Wayland.
 
-```bash
-cd ~/Projects
-git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
-cd omarchy-configs
-```
+    Steam launch options:
 
----
+    ```bash
+    SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
+    ```
 
-## 🔄 Configuration Management
+    If Waybar appears over the game, toggle real fullscreen with `SUPER + F`.
 
-Apply the repository configuration:
+14. Configure StarCraft: Remastered.
 
-```bash
-python scripts/compare_configs.py
-```
-```bash
-python scripts/apply_configs.py
-```
-```bash
-python scripts/compare_configs.py
-```
+    Download the Battle.net Windows installer from `https://www.blizzard.com/download`, add it to Steam as a non-Steam game, force Proton Experimental, run the installer, log in to Battle.net, and install StarCraft: Remastered while keeping the Battle.net window visible.
 
-Then reload Hyprland and reboot to ensure all changes are applied:
+    Steam launch options:
 
-```bash
-hyprctl reload
-reboot
-```
+    ```bash
+    PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
+    ```
 
----
+15. Install the optional Ghost Pastel Omarchy theme.
 
-## 🖥️ Monitors
+    ```bash
+    omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
+    ```
 
-This setup uses a dual-monitor layout:
+    Theme page: `https://omarchytheme.com/themes/ghost-pastel/`
 
-* `DP-1` → main monitor, 2560x1440 at 120 Hz
-* `HDMI-A-1` → secondary monitor, 1366x768 at 60 Hz
+## Author
 
-### Config
-
-Open:
-
-```bash
-nvim ~/.config/hypr/monitors.conf
-```
-
-Use:
-
-```ini
-# ~/.config/hypr/monitors.conf
-
-monitor=DP-1,2560x1440@120,0x0,1
-monitor=HDMI-A-1,1366x768@60,2560x0,1
-```
-
-### Reload
-
-```bash
-hyprctl reload
-```
-
----
-
-## 🧰 Waybar
-
-Waybar is used as the main status bar.
-
-### Config
-
-Open:
-
-```bash
-nvim ~/.config/waybar/config.jsonc
-```
-
-### Clock
-
-Use the following clock configuration to display the date, weekday, and time:
-
-```jsonc
-"clock": {
-  "format": "{:L%d %B %A %H:%M}",
-  "format-alt": "{:L%d %B %A %H:%M}",
-  "tooltip": false,
-  "on-click-right": "omarchy-launch-floating-terminal-with-presentation omarchy-tz-select"
-}
-```
-
-Right-clicking the clock opens the Omarchy timezone selector.
-
-### Persistent Workspaces
-
-Ensure persistent workspaces:
-
-```jsonc
-"persistent-workspaces": {
-  "1": [],
-  "2": [],
-  "3": [],
-  "4": [],
-  "5": [],
-  "6": [],
-  "7": []
-}
-```
-
-The battery module is intentionally omitted because this configuration targets a desktop system.
-
-### Reload
-
-```bash
-pkill waybar
-hyprctl dispatch exec waybar
-```
-
----
-
-## 🔤 Alacritty
-
-Current system default terminal, based on `~/.config/xdg-terminals.list`.
-
-### Config
-
-Open:
-
-```bash
-nvim ~/.config/alacritty/alacritty.toml
-```
-
-### Font Size
-
-Locate or add:
-
-```toml
-[font]
-size = 13.0
-```
-
-Close all terminal windows and open a new one to apply the change.
-
----
-
-## ⚙️ Hyprland
-
-This configuration assigns seven workspaces across two monitors.
-
-* Workspaces `1`, `2`, `3`, `7` → `DP-1`
-* Workspaces `4`, `5`, `6` → `HDMI-A-1`
-
-### Config
-
-Open:
-
-```bash
-nvim ~/.config/hypr/hyprland.conf
-```
-
-### Hyprland Rules
-
-Append the following rules at the end of the file:
-
-```ini
-# ~/.config/hypr/hyprland.conf
-
-workspace=1,monitor:DP-1
-workspace=2,monitor:DP-1
-workspace=3,monitor:DP-1
-workspace=4,monitor:HDMI-A-1
-workspace=5,monitor:HDMI-A-1
-workspace=6,monitor:HDMI-A-1
-workspace=7,monitor:DP-1
-
-windowrule {
-    name = steam-all
-    match:class = ^steam.*$
-    workspace = 1
-    float = on
-    center = on
-}
-
-windowrule {
-    name = steam-title-fallback
-    match:class = ^steam$
-    match:title = ^(Steam|Updating|Working|Loading).*
-    workspace = 1
-    float = on
-    center = on
-}
-
-windowrule {
-    name = steam-signin
-    match:initial_title = ^Sign in to Steam$
-    workspace = 1
-    float = on
-    center = on
-}
-
-windowrule {
-    name = dota2-main
-    match:class = ^(steam_app_570|dota2)$
-    workspace = 1
-    fullscreen = on
-    no_anim = on
-    monitor = DP-1
-}
-
-device {
-    name = logitech-g300s-optical-gaming-mouse
-    sensitivity = 0.20
-    accel_profile = adaptive
-}
-```
-
-### Reload
-
-```bash
-hyprctl reload
-```
-
----
-
-## ⚙️ Hyprland Autostart
-
-Use autostart to initialize the workspace layout after login.
-
-### Config
-
-Open:
-
-```bash
-nvim ~/.config/hypr/autostart.conf
-```
-
-Add:
-
-```ini
-# ~/.config/hypr/autostart.conf
-
-exec = hyprctl dispatch workspace 1
-exec = hyprctl dispatch movetoworkspace 1,DP-1
-exec = hyprctl dispatch workspace 2
-exec = hyprctl dispatch movetoworkspace 2,DP-1
-exec = hyprctl dispatch workspace 3
-exec = hyprctl dispatch movetoworkspace 3,DP-1
-exec = hyprctl dispatch workspace 4
-exec = hyprctl dispatch movetoworkspace 4,HDMI-A-1
-exec = hyprctl dispatch workspace 5
-exec = hyprctl dispatch movetoworkspace 5,HDMI-A-1
-exec = hyprctl dispatch workspace 6
-exec = hyprctl dispatch movetoworkspace 6,HDMI-A-1
-exec = hyprctl dispatch workspace 7
-exec = hyprctl dispatch movetoworkspace 7,DP-1
-```
-
-### Reload
-
-```bash
-hyprctl reload
-```
----
-
-## 🎮 Steam
-
-### Install
-
-```bash
-sudo pacman -S --needed --noconfirm steam
-```
-
----
-
-## 🎯 Dota 2
-
-Dota 2 is configured to run **natively using Vulkan**.
-
-Do not use:
-
-* Gamescope
-* Proton
-* Wine
-* Any wrapper
-
-These can break VAC verification and disable matchmaking.
-
-### Launch Options
-
-Set in Steam:
-
-```bash
-SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
-```
-
-### Notes
-
-* `-novid` → skips intro
-* `-console` → enables developer console
-* Native Vulkan keeps matchmaking enabled
-* NVIDIA ICD path avoids incorrect Vulkan provider selection
-
----
-
-## 🧟 Left 4 Dead 2
-
-Left 4 Dead 2 works best when forcing X11.
-
-This avoids broken input scaling under Wayland and does not require Gamescope or borderless hacks.
-
-### Launch Options
-
-Set in Steam:
-
-```bash
-SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
-```
-
-### Notes
-
-* Game may initially show Waybar
-* Toggle real fullscreen with **SUPER + F**
-* Once fullscreen, input scaling and clicks behave correctly
-* No window positioning flags are required
-
----
-
-## 🧠 StarCraft: Remastered
-
-StarCraft: Remastered does not have a native Linux build.
-
-The most reliable setup on Omarchy is:
-
-* Steam
-* Battle.net Windows installer
-* Proton Experimental
-
-Lutris and standalone Wine are less stable due to Battle.net agent issues.
-
-### Installation
-
-1. Download the Battle.net Windows installer:
-
-```text
-https://www.blizzard.com/download
-```
-
-2. In Steam:
-   * Add the installer as a Non-Steam Game
-   * Force compatibility with Proton Experimental
-
-3. Launch the installer and install Battle.net
-
-4. Inside Battle.net:
-   * Log in
-   * Install StarCraft: Remastered
-   * Keep the Battle.net window visible during download
-
-### Launch Options
-
-Set in Steam:
-
-```bash
-PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
-```
-
-### Notes
-
-* Proton Experimental is recommended during installation
-* Other Proton versions may freeze Battle.net downloads
-* After installation, Proton Experimental can be kept or replaced with a stable Proton version
-
----
-
-## 👤 Author
-
-Luis Vásquez
-
-## Install Theme
-
-```
-omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
-```
-
-```
-https://omarchytheme.com/themes/ghost-pastel/
-```
-
+Luis Vasquez
