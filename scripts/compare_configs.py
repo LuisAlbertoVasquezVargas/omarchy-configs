@@ -54,23 +54,23 @@ def color_diff_line(line: str) -> str:
 
 
 def print_diff(
-    repo_file: Path,
     home_file: Path,
+    repo_file: Path,
     relative_path: Path,
 ) -> None:
-    repo_lines = read_lines(repo_file)
     home_lines = read_lines(home_file)
+    repo_lines = read_lines(repo_file)
 
-    if repo_lines is None or home_lines is None:
+    if home_lines is None or repo_lines is None:
         print("  Text diff unavailable for this file.")
         return
 
     diff_lines = list(
         unified_diff(
-            repo_lines,
             home_lines,
-            fromfile=f"repo/.config/{relative_path}",
-            tofile=f"home/.config/{relative_path}",
+            repo_lines,
+            fromfile=f"system/.config/{relative_path}",
+            tofile=f"repo/.config/{relative_path}",
             lineterm="",
         )
     )
@@ -110,8 +110,8 @@ def main() -> None:
     missing: list[Path] = []
 
     print(color("Config comparison", BOLD))
+    print(f"Baseline:   {home_config}")
     print(f"Repository: {repo_config}")
-    print(f"Current:    {home_config}")
     print()
 
     for repo_file in sorted(repo_config.rglob("*")):
@@ -137,7 +137,7 @@ def main() -> None:
             continue
 
         print(f"{label('mismatch', YELLOW)} {relative_path}")
-        print_diff(repo_file, home_file, relative_path)
+        print_diff(home_file, repo_file, relative_path)
         print()
 
         mismatches.append(relative_path)
