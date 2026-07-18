@@ -7,7 +7,7 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 - OS: Omarchy
 - WM: Hyprland
 - CPU: AMD Ryzen 7 5700X
-- GPU: NVIDIA GeForce GTX 1650 SUPER
+- GPU: NVIDIA GeForce RTX 3060 Ti
 - Main display: `DP-1`
 - Secondary display: `HDMI-A-1`
 
@@ -172,6 +172,6 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
 
     Theme page: `https://omarchytheme.com/themes/ghost-pastel/`
 
-## Author
+## Experimental: Neovim Image Rendering
 
-Luis Vasquez
+We want to experiment with rendering images directly inside Neovim through Ghostty. This is exploratory and is not yet part of the reproducible setup.
