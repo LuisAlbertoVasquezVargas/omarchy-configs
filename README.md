@@ -1,6 +1,6 @@
 # Omarchy Desktop Config
 
-Personal Omarchy configuration for a desktop workstation focused on dual-monitor Hyprland workflow, seven persistent workspaces, desktop-oriented Waybar modules, Alacritty defaults, Steam/Dota 2 window behavior, NVIDIA Vulkan stability, Logitech G300s mouse tuning, Ferdium startup, and native Linux gaming. The tracked files under `.config/` are the single source of truth for desktop configuration; this README keeps only the setup order and manual instructions.
+Personal Omarchy configuration for a desktop workstation focused on dual-monitor Hyprland workflow, seven persistent workspaces, desktop-oriented Waybar modules, Ghostty defaults, Steam/Dota 2 window behavior, NVIDIA Vulkan stability, Logitech G300s mouse tuning, Ferdium startup, and native Linux gaming. The tracked files under `.config/` are the single source of truth for desktop configuration; this README keeps only the setup order and manual instructions.
 
 ## Target System
 
@@ -10,6 +10,22 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 - GPU: NVIDIA GeForce GTX 1650 SUPER
 - Main display: `DP-1`
 - Secondary display: `HDMI-A-1`
+
+## Ghostty Setup
+
+1. Install Ghostty.
+
+   ```bash
+   omarchy install terminal ghostty
+   ```
+
+2. Make Ghostty the default terminal.
+
+   ```bash
+   omarchy default terminal ghostty
+   ```
+
+The tracked Ghostty configuration changes the font size from `9` to `13` and disables font-size inheritance so every new window starts at size `13`.
 
 ## Setup Steps
 
@@ -108,7 +124,7 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
     omarchy restart waybar
     ```
 
-    Reopen Alacritty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
+    Reopen Ghostty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
 
 13. Install Steam.
 
