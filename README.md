@@ -33,7 +33,32 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 
    Open Ferdium, choose `Use without account`, add the messaging services you need, and scan the QR code for WhatsApp.
 
-4. Authenticate GitHub CLI.
+4. Install Node.js and npm for the OpenAI Codex CLI.
+
+   ```bash
+   sudo pacman -S --needed nodejs npm
+   ```
+
+   Verify the installation.
+
+   ```bash
+   node -v
+   npm -v
+   ```
+
+5. Install the OpenAI Codex CLI globally with npm.
+
+   ```bash
+   npm install -g @openai/codex
+   ```
+
+   Verify the installation.
+
+   ```bash
+   codex --version
+   ```
+
+6. Authenticate GitHub CLI.
 
    ```bash
    gh auth login
@@ -41,14 +66,14 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 
    Use browser login when prompted.
 
-5. Add the Git push alias.
+7. Add the Git push alias.
 
    ```bash
    echo 'alias gpm="git push origin main"' >> ~/.bashrc
    source ~/.bashrc
    ```
 
-6. Clone this repository.
+8. Clone this repository.
 
    ```bash
    cd ~/Projects
@@ -56,13 +81,13 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
    cd omarchy-configs
    ```
 
-7. Compare the repository configs with the current system configs.
+9. Compare the repository configs with the current system configs.
 
    ```bash
    python scripts/compare_configs.py
    ```
 
-8. Apply the repository configs.
+10. Apply the repository configs.
 
    ```bash
    python scripts/apply_configs.py
@@ -70,13 +95,13 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 
    The script previews creates/replacements first and only writes after you type `yes`. Replaced files are backed up under `~/.local/state/omarchy-configs/backups/`.
 
-9. Compare again to confirm the files now match.
+11. Compare again to confirm the files now match.
 
     ```bash
     python scripts/compare_configs.py
     ```
 
-10. Reload the desktop.
+12. Reload the desktop.
 
     ```bash
     hyprctl reload
@@ -85,13 +110,13 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 
     Reopen Alacritty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
 
-11. Install Steam.
+13. Install Steam.
 
     ```bash
     sudo pacman -S --needed --noconfirm steam
     ```
 
-12. Configure Dota 2.
+14. Configure Dota 2.
 
     Use the native Linux build with Vulkan. Do not use Gamescope, Proton, Wine, or wrappers because they can break VAC verification and disable matchmaking.
 
@@ -101,7 +126,7 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
     SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
     ```
 
-13. Configure Left 4 Dead 2.
+15. Configure Left 4 Dead 2.
 
     Force X11 to avoid broken input scaling under Wayland.
 
@@ -113,7 +138,7 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
 
     If Waybar appears over the game, toggle real fullscreen with `SUPER + F`.
 
-14. Configure StarCraft: Remastered.
+16. Configure StarCraft: Remastered.
 
     Download the Battle.net Windows installer from `https://www.blizzard.com/download`, add it to Steam as a non-Steam game, force Proton Experimental, run the installer, log in to Battle.net, and install StarCraft: Remastered while keeping the Battle.net window visible.
 
@@ -123,7 +148,7 @@ Personal Omarchy configuration for a desktop workstation focused on dual-monitor
     PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
     ```
 
-15. Install the optional Ghost Pastel Omarchy theme.
+17. Install the optional Ghost Pastel Omarchy theme.
 
     ```bash
     omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
