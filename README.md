@@ -174,4 +174,41 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
 
 ## Experimental: Neovim Image Rendering
 
-We want to experiment with rendering images directly inside Neovim through Ghostty. This is exploratory and is not yet part of the reproducible setup.
+This experiment renders standalone images and inline Markdown images inside Neovim through Ghostty's graphics-protocol support. PDF documents remain external and open in Zathura. The Neovim configuration is intentionally not tracked yet because this workflow is still being evaluated.
+
+1. Confirm Ghostty is the default terminal and start Neovim from a fresh Ghostty window.
+
+2. Install the image conversion and PDF preview dependencies.
+
+   ```bash
+   omarchy pkg add imagemagick zathura zathura-pdf-mupdf
+   ```
+
+3. Enable the image module from LazyVim's existing `snacks.nvim` plugin by creating `~/.config/nvim/lua/plugins/image-rendering.lua`:
+
+   ```lua
+   return {
+     {
+       "folke/snacks.nvim",
+       opts = {
+         image = {},
+       },
+     },
+   }
+   ```
+
+4. Restart Neovim and run `:checkhealth snacks`. Ghostty and ImageMagick should pass the image checks when Neovim is running interactively inside Ghostty.
+
+5. Test a standalone PNG or JPEG, then open a Markdown document containing a relative image reference. Use Zathura for PDF previews rather than rendering PDFs inline.
+
+Headless Neovim cannot complete the terminal graphics handshake, so its health check may incorrectly report that the graphics protocol is unavailable. Validate rendering in an interactive Ghostty window.
+
+## Experimental: Codex Workspace Shortcut
+
+`SUPER + HOME` switches to workspace 2 and opens Codex in a new Ghostty window rooted at `~/Projects/omarchy-configs`.
+
+The binding is intentionally kept out of the tracked Hyprland configuration while it is being evaluated:
+
+```text
+bindd = SUPER, HOME, Codex (workspace 2), exec, hyprctl dispatch workspace 2 && uwsm-app -- xdg-terminal-exec --dir="$HOME/Projects/omarchy-configs" codex
+```
