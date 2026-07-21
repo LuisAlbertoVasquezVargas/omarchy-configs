@@ -205,10 +205,33 @@ Headless Neovim cannot complete the terminal graphics handshake, so its health c
 
 ## Experimental: Codex Workspace Shortcut
 
-`SUPER + HOME` switches to workspace 2 and opens Codex in a new Ghostty window rooted at `~/Projects/omarchy-configs`.
+These shortcuts open Codex and a terminal in the corresponding project workspace:
 
-The binding is intentionally kept out of the tracked Hyprland configuration while it is being evaluated:
+- `SUPER + HOME` uses workspace 2 and `~/Projects/MOVER-research-materials/`.
+- `SUPER + END` uses workspace 3 and `~/Projects/shopping-list-ui/`.
+
+Add the following lines to `~/.config/hypr/bindings.conf`. They are intentionally kept out of the tracked Hyprland configuration while they are being evaluated:
 
 ```text
-bindd = SUPER, HOME, Codex (workspace 2), exec, hyprctl dispatch workspace 2 && uwsm-app -- xdg-terminal-exec --dir="$HOME/Projects/omarchy-configs" codex
+bindd = SUPER, HOME, Codex + terminal (workspace 2), workspace, 2
+bind = SUPER, HOME, exec, [workspace 2 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/MOVER-research-materials/" && exec codex'
+bind = SUPER, HOME, exec, [workspace 2 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/MOVER-research-materials/" && exec bash'
+bindd = SUPER, END, Codex + terminal (workspace 3), workspace, 3
+bind = SUPER, END, exec, [workspace 3 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/shopping-list-ui/" && exec codex'
+bind = SUPER, END, exec, [workspace 3 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/shopping-list-ui/" && exec bash'
+```
+
+## Experimental: NVIDIA GPU Driver Update
+
+This machine uses the NVIDIA open kernel modules. Update the GPU driver packages as part of a full system upgrade so the kernel, DKMS module, and user-space libraries remain compatible:
+
+```bash
+yay -Syu nvidia-open-dkms nvidia-utils
+```
+
+After the upgrade completes successfully, reboot and verify the loaded driver:
+
+```bash
+omarchy system reboot
+nvidia-smi
 ```
