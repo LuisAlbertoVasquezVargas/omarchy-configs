@@ -126,13 +126,21 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
 
     Reopen Ghostty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
 
-13. Install Steam.
+13. Install the optional Ghost Pastel Omarchy theme.
+
+    ```bash
+    omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
+    ```
+
+    Theme page: `https://omarchytheme.com/themes/ghost-pastel/`
+
+14. Install Steam.
 
     ```bash
     sudo pacman -S --needed --noconfirm steam
     ```
 
-14. Configure Dota 2.
+15. Configure Dota 2.
 
     Use the native Linux build with Vulkan. Do not use Gamescope, Proton, Wine, or wrappers because they can break VAC verification and disable matchmaking.
 
@@ -142,7 +150,7 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
     SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
     ```
 
-15. Configure Left 4 Dead 2.
+16. Configure Left 4 Dead 2.
 
     Force X11 to avoid broken input scaling under Wayland.
 
@@ -154,7 +162,7 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
 
     If Waybar appears over the game, toggle real fullscreen with `SUPER + F`.
 
-16. Configure StarCraft: Remastered.
+17. Configure StarCraft: Remastered.
 
     Download the Battle.net Windows installer from `https://www.blizzard.com/download`, add it to Steam as a non-Steam game, force Proton Experimental, run the installer, log in to Battle.net, and install StarCraft: Remastered while keeping the Battle.net window visible.
 
@@ -163,14 +171,6 @@ The tracked Ghostty configuration changes the font size from `9` to `13` and dis
     ```bash
     PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
     ```
-
-17. Install the optional Ghost Pastel Omarchy theme.
-
-    ```bash
-    omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
-    ```
-
-    Theme page: `https://omarchytheme.com/themes/ghost-pastel/`
 
 ## Experimental: Neovim Image Rendering
 
