@@ -25,12 +25,6 @@ Install and activate the Ghost Pastel community theme:
 omarchy theme install https://github.com/row-huh/omarchy-ghost-pastel-theme
 ```
 
-The theme is installed under `~/.config/omarchy/themes/ghost-pastel`. Switch back to it later with:
-
-```bash
-omarchy theme set "Ghost Pastel"
-```
-
 ## Brave
 
 ```bash
