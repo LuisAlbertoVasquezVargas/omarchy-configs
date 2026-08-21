@@ -27,10 +27,33 @@ omarchy theme install https://github.com/row-huh/omarchy-ghost-pastel-theme
 
 ## Brave
 
+Install Brave:
+
 ```bash
 omarchy install browser brave
+```
+
+Then set Brave as the default browser:
+
+```bash
 omarchy default browser brave
 ```
+
+### Setup
+
+1. Open Brave and set it as the default browser.
+2. Go to **Settings → Appearance → Theme** and select **Dark**.
+3. Go to **Settings → Sync** and select **I have a Sync Code**.
+4. On your smartphone:
+   1. Open Brave.
+   2. Go to **Settings → Sync**.
+   3. Select **Add a new device**.
+   4. Scan the QR code displayed on your desktop.
+5. Wait for synchronization to complete, including bookmarks, passwords, history, tabs, and other data.
+6. Go to **Settings → Search engine** and set:
+   - **Normal:** Google
+   - **Private:** Google
+7. Go to **Settings → System** and disable **Use graphics acceleration when available**.
 
 ## Ghostty
 
