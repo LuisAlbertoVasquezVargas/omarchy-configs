@@ -5,7 +5,7 @@ Personal configuration for Omarchy Quattro.
 ## Target System
 
 - CPU: AMD Ryzen 7 5700X
-- GPU: NVIDIA GeForce RTX 3060 Ti
+- GPU: NVIDIA GeForce RTX 5060 Ti
 
 <!-- TODO: Describe additional hardware components. -->
 
