@@ -1,237 +1,292 @@
 # Omarchy Desktop Config
 
-Personal Omarchy configuration for a desktop workstation focused on dual-monitor Hyprland workflow, seven persistent workspaces, desktop-oriented Waybar modules, Ghostty defaults, Steam/Dota 2 window behavior, NVIDIA Vulkan stability, Logitech G300s mouse tuning, Ferdium startup, and native Linux gaming. The tracked files under `.config/` are the single source of truth for desktop configuration; this README keeps only the setup order and manual instructions.
+Personal configuration for Omarchy Quattro.
 
 ## Target System
 
-- OS: Omarchy
-- WM: Hyprland
 - CPU: AMD Ryzen 7 5700X
-- GPU: NVIDIA GeForce RTX 3060 Ti
-- Main display: `DP-1`
-- Secondary display: `HDMI-A-1`
+- GPU: NVIDIA GeForce RTX 5060 Ti
 
-## Ghostty Setup
+<!-- TODO: Describe additional hardware components. -->
 
-1. Install Ghostty.
+## Clone This Repository
 
-   ```bash
-   omarchy install terminal ghostty
-   ```
+```bash
+cd ~/Projects
+git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
+cd omarchy-configs
+```
 
-2. Make Ghostty the default terminal.
+## Ghost Pastel Theme
 
-   ```bash
-   omarchy default terminal ghostty
-   ```
+Install and activate the Ghost Pastel community theme:
 
-The tracked Ghostty configuration changes the font size from `9` to `13` and disables font-size inheritance so every new window starts at size `13`.
+```bash
+omarchy theme install https://github.com/row-huh/omarchy-ghost-pastel-theme
+```
 
-## Setup Steps
+The theme is installed under `~/.config/omarchy/themes/ghost-pastel`. Switch back to it later with:
 
-1. This repository assumes Omarchy is already installed.
+```bash
+omarchy theme set "Ghost Pastel"
+```
 
-2. Install Brave.
+## Brave
 
-   ```bash
-   sudo -v
-   yay -S --noconfirm brave-bin
-   ```
+```bash
+omarchy install browser brave
+omarchy default browser brave
+```
 
-   Open Brave, set it as the default browser, set Google as the normal and private search engine, select the dark theme, then connect Brave Sync from your phone with the desktop QR code.
+## Ghostty
 
-3. Install Ferdium.
+> **TODO:** Although Ghostty was used on the previous Omarchy setup, test both Ghostty and Foot on Omarchy Quattro before choosing and documenting the default terminal.
 
-   ```bash
-   sudo pacman -S --needed --noconfirm flatpak
-   flatpak install --noninteractive flathub org.ferdium.Ferdium
-   ```
+## WhatsApp
 
-   Open Ferdium, choose `Use without account`, add the messaging services you need, and scan the QR code for WhatsApp.
+Nothing to install. WhatsApp comes preinstalled as an Omarchy web app.
 
-4. Install Node.js and npm for the OpenAI Codex CLI.
+## Slack
 
-   ```bash
-   sudo pacman -S --needed nodejs npm
-   ```
+Install Slack as an Omarchy web app:
 
-   Verify the installation.
+```bash
+omarchy webapp install "Slack" "https://app.slack.com/client" ""
+```
 
-   ```bash
-   node -v
-   npm -v
-   ```
+The empty icon argument lets Omarchy download Slack's icon automatically. Open the app launcher with `Super + Space`, search for **Slack**, and sign in to the workspace. Allow notifications when Brave prompts for permission.
 
-5. Install the OpenAI Codex CLI globally with npm.
+Because Brave is the configured default browser, Slack opens in a standalone Brave web-app window.
 
-   ```bash
-   npm install -g @openai/codex
-   ```
+## Discord
 
-   Verify the installation.
+Nothing to install. Discord comes preinstalled as an Omarchy web app. Open the app launcher with `Super + Space`, search for **Discord**, and sign in.
 
-   ```bash
-   codex --version
-   ```
+Because Brave is the configured default browser, Discord opens in a standalone Brave web-app window.
 
-6. Authenticate GitHub CLI.
+## Zathura
 
-   ```bash
-   gh auth login
-   ```
+```bash
+omarchy pkg add zathura zathura-pdf-mupdf
+xdg-mime default org.pwmt.zathura.desktop application/pdf
+```
 
-   Use browser login when prompted.
+## Neovim
 
-7. Add the Git push alias.
+Show hidden, filtered, and Git-ignored items in Neo-tree by default while keeping their filtered styling.
 
-   ```bash
-   echo 'alias gpm="git push origin main"' >> ~/.bashrc
-   source ~/.bashrc
-   ```
+Path: `~/.config/nvim/lua/plugins/neo-tree.lua`
 
-8. Clone this repository.
+```lua
+return {
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    opts = {
+      filesystem = {
+        filtered_items = {
+          visible = true,
+        },
+      },
+    },
+  },
+}
+```
 
-   ```bash
-   cd ~/Projects
-   git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
-   cd omarchy-configs
-   ```
+Restart Neovim or reopen Neo-tree to apply the change.
 
-9. Compare the repository configs with the current system configs.
+## Steam
 
-   ```bash
-   python scripts/compare_configs.py
-   ```
+```bash
+omarchy install gaming steam
+```
 
-10. Apply the repository configs.
+Dota 2 launch options:
 
-   ```bash
-   python scripts/apply_configs.py
-   ```
+```bash
+SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
+```
 
-   The script previews creates/replacements first and only writes after you type `yes`. Replaced files are backed up under `~/.local/state/omarchy-configs/backups/`.
+## Clock Format
 
-11. Compare again to confirm the files now match.
+Migrates the previous Waybar clock format to Omarchy Shell.
 
-    ```bash
-    python scripts/compare_configs.py
-    ```
+Path: `~/.config/omarchy/shell.json`
 
-12. Reload the desktop.
+```json
+{
+  "id": "omarchy.clock",
+  "format": "dd MMM ddd · 'W'ww · HH:mm",
+  "formatAlt": "dd MMM ddd · 'W'ww · HH:mm",
+  "verticalFormat": "HH\n—\nmm"
+}
+```
 
-    ```bash
-    hyprctl reload
-    omarchy restart waybar
-    ```
+## Compact Window Layout
 
-    Reopen Ghostty windows so font, padding, and keyboard changes are picked up. Reboot if you want to verify the full autostart flow from a clean login.
+Path: `~/.config/hypr/looknfeel.lua`
 
-13. Install the optional Ghost Pastel Omarchy theme.
+```lua
+hl.config({
+  general = {
+    gaps_in = 0,
+    gaps_out = 0,
+    border_size = 0,
+  },
+})
+```
 
-    ```bash
-    omarchy-theme-install https://github.com/row-huh/omarchy-ghost-pastel-theme
-    ```
+## Seven Workspaces
 
-    Theme page: `https://omarchytheme.com/themes/ghost-pastel/`
+Configure Hyprland to use only workspaces 1-7 across both desktop monitors. When both displays are connected, workspaces 1-4 belong to `DP-1` and workspaces 5-7 belong to `HDMI-A-1`, matching the previous desktop layout. When only one display is connected, it receives all seven workspaces.
 
-14. Install Steam.
+### Create the persistent workspaces
 
-    ```bash
-    sudo pacman -S --needed --noconfirm steam
-    ```
+Path: `~/.config/hypr/hyprland.lua`
 
-15. Configure Dota 2.
+```lua
+local connected_monitors = {}
+local fallback_monitor
 
-    Use the native Linux build with Vulkan. Do not use Gamescope, Proton, Wine, or wrappers because they can break VAC verification and disable matchmaking.
+for _, monitor in ipairs(hl.get_monitors()) do
+  connected_monitors[monitor.name] = true
+  fallback_monitor = fallback_monitor or monitor.name
+end
 
-    Steam launch options:
+local primary_monitor = connected_monitors["DP-1"] and "DP-1" or fallback_monitor
+local secondary_monitor = connected_monitors["HDMI-A-1"] and "HDMI-A-1" or nil
 
-    ```bash
-    SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
-    ```
+if secondary_monitor == primary_monitor then
+  secondary_monitor = nil
+end
 
-16. Configure Left 4 Dead 2.
+for workspace = 1, 7 do
+  local rule = {
+    workspace = tostring(workspace),
+    persistent = true,
+  }
 
-    Force X11 to avoid broken input scaling under Wayland.
+  if secondary_monitor and workspace >= 5 then
+    rule.monitor = secondary_monitor
+    if workspace == 5 then
+      rule.default = true
+    end
+  elseif primary_monitor then
+    rule.monitor = primary_monitor
+    if workspace == 1 then
+      rule.default = true
+    end
+  end
 
-    Steam launch options:
+  hl.workspace_rule(rule)
+end
+```
 
-    ```bash
-    SDL_VIDEODRIVER=x11 SDL_AUDIODRIVER=pulse %command% -console -novid
-    ```
+Run `hyprctl reload` after connecting or disconnecting a display so the monitor assignments are reevaluated.
 
-    If Waybar appears over the game, toggle real fullscreen with `SUPER + F`.
+### Disable workspace 8-10 shortcuts
 
-17. Configure StarCraft: Remastered.
+Omarchy provides numeric bindings for workspaces 1-10 by default. Disable switching to or moving windows to workspaces 8-10.
 
-    Download the Battle.net Windows installer from `https://www.blizzard.com/download`, add it to Steam as a non-Steam game, force Proton Experimental, run the installer, log in to Battle.net, and install StarCraft: Remastered while keeping the Battle.net window visible.
+Path: `~/.config/hypr/bindings.lua`
 
-    Steam launch options:
+```lua
+-- Limit numeric workspace bindings to the seven persistent workspaces.
+for workspace = 8, 10 do
+  local key = "code:" .. tostring(workspace + 9)
 
-    ```bash
-    PROTON_NO_ESYNC=1 PROTON_NO_FSYNC=1 %command%
-    ```
+  hl.unbind("SUPER + " .. key)
+  hl.unbind("SUPER + SHIFT + " .. key)
+  hl.unbind("SUPER + SHIFT + ALT + " .. key)
+end
+```
 
-## Experimental: Neovim Image Rendering
+### Reload and validate Hyprland
 
-This experiment renders standalone images and inline Markdown images inside Neovim through Ghostty's graphics-protocol support. PDF documents remain external and open in Zathura. The Neovim configuration is intentionally not tracked yet because this workflow is still being evaluated.
+```bash
+hyprctl reload
+hyprctl configerrors
+```
 
-1. Confirm Ghostty is the default terminal and start Neovim from a fresh Ghostty window.
+`hyprctl configerrors` should return no output.
 
-2. Install the image conversion and PDF preview dependencies.
+### Remove an existing workspace 8
 
-   ```bash
-   omarchy pkg add imagemagick zathura zathura-pdf-mupdf
-   ```
+If a workspace above 7 was already created, check whether it contains any windows:
 
-3. Enable the image module from LazyVim's existing `snacks.nvim` plugin by creating `~/.config/nvim/lua/plugins/image-rendering.lua`:
+```bash
+hyprctl -j clients | jq \
+  '[.[] | select(.workspace.id > 7 and .workspace.id <= 10) |
+  {address, class, title, workspace: .workspace.id}]'
+```
 
-   ```lua
-   return {
-     {
-       "folke/snacks.nvim",
-       opts = {
-         image = {},
-       },
-     },
-   }
-   ```
+Move each listed window to workspace 7, replacing the example address with the address reported by the previous command:
 
-4. Restart Neovim and run `:checkhealth snacks`. Ghostty and ImageMagick should pass the image checks when Neovim is running interactively inside Ghostty.
+```bash
+hyprctl dispatch \
+  'hl.dsp.window.move({ workspace = "7", follow = false, window = "address:0xWINDOW_ADDRESS" })'
+```
 
-5. Test a standalone PNG or JPEG, then open a Markdown document containing a relative image reference. Use Zathura for PDF previews rather than rendering PDFs inline.
+Window addresses change between sessions and must not be hardcoded.
 
-Headless Neovim cannot complete the terminal graphics handshake, so its health check may incorrectly report that the graphics protocol is unavailable. Validate rendering in an interactive Ghostty window.
+Activate workspace 7 on `HDMI-A-1` and reload:
+
+```bash
+hyprctl dispatch 'hl.dsp.focus({ workspace = "7" })'
+hyprctl reload
+```
+
+### Verify the result
+
+```bash
+hyprctl -j workspaces | jq \
+  'sort_by(.id) | map({id, monitor, windows})'
+```
+
+The workspace IDs should be exactly 1-7, with workspaces 1-4 on `DP-1` and 5-7 on `HDMI-A-1`.
+
+Confirm that no bindings for workspaces 8-10 remain:
+
+```bash
+hyprctl -j binds | jq \
+  '[.[] |
+  select((.description // "") |
+  test("workspace (8|9|10)$"; "i")) |
+  .description]'
+```
+
+The expected result is:
+
+```text
+[]
+```
 
 ## Experimental: Codex Workspace Shortcut
 
-These shortcuts open Codex and a terminal in the corresponding project workspace:
+Path: `~/.config/hypr/bindings.lua`
 
-- `SUPER + HOME` uses workspace 2 and `~/Projects/MOVER-research-materials/`.
-- `SUPER + END` uses workspace 3 and `~/Projects/shopping-list-ui/`.
+```lua
+local function codex_workspace(key, workspace, path)
+  local rules = { workspace = workspace .. " silent" }
 
-Add the following lines to `~/.config/hypr/bindings.conf`. They are intentionally kept out of the tracked Hyprland configuration while they are being evaluated:
+  o.bind(key, "Codex + terminal (workspace " .. workspace .. ")", hl.dsp.focus({ workspace = workspace }))
+  o.bind(key, nil, hl.dsp.exec_cmd(o.launch('xdg-terminal-exec --dir="' .. path .. '" codex -C "' .. path .. '"'), rules))
+  o.bind(key, nil, hl.dsp.exec_cmd(o.launch('xdg-terminal-exec --dir="' .. path .. '"'), rules))
+end
 
-```text
-bindd = SUPER, HOME, Codex + terminal (workspace 2), workspace, 2
-bind = SUPER, HOME, exec, [workspace 2 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/MOVER-research-materials/" && exec codex'
-bind = SUPER, HOME, exec, [workspace 2 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/MOVER-research-materials/" && exec bash'
-bindd = SUPER, END, Codex + terminal (workspace 3), workspace, 3
-bind = SUPER, END, exec, [workspace 3 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/shopping-list-ui/" && exec codex'
-bind = SUPER, END, exec, [workspace 3 silent] uwsm-app -- xdg-terminal-exec bash -lc 'cd "$HOME/Projects/shopping-list-ui/" && exec bash'
+codex_workspace("SUPER + Prior", "2", os.getenv("HOME") .. "/Projects/MOVER-research-materials") -- Page Up / Re Pág
+codex_workspace("SUPER + Next", "3", os.getenv("HOME") .. "/Projects/shopping-list-ui") -- Page Down / Av Pág
 ```
 
 ## Experimental: NVIDIA GPU Driver Update
 
-This machine uses the NVIDIA open kernel modules. Update the GPU driver packages as part of a full system upgrade so the kernel, DKMS module, and user-space libraries remain compatible:
+Update Omarchy, the kernel, and NVIDIA packages together:
 
 ```bash
-yay -Syu nvidia-open-dkms nvidia-utils
-```
-
-After the upgrade completes successfully, reboot and verify the loaded driver:
-
-```bash
+omarchy update
 omarchy system reboot
 nvidia-smi
 ```
+
+## Apply Configs
+
+> **TODO:** Adapt `scripts/apply_configs.py` for Omarchy Quattro.
