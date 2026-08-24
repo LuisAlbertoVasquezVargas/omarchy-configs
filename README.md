@@ -6,6 +6,7 @@ Personal configuration for Omarchy Quattro.
 
 - CPU: AMD Ryzen 7 5700X
 - GPU: NVIDIA GeForce RTX 5060 Ti
+- Display: BenQ G610HDAL, 1366x768 at 59.79 Hz (`HDMI-A-1`)
 
 <!-- TODO: Describe additional hardware components. -->
 
@@ -117,6 +118,59 @@ Restart Neovim or reopen Neo-tree to apply the change.
 omarchy install gaming steam
 ```
 
+### Small-display scaling and window layout
+
+Keep both the GTK application scale and Hyprland monitor scale at `1` so Steam does not inherit a doubled interface on the 1366x768 display.
+
+Path: `~/.config/hypr/monitors.lua`
+
+```lua
+local omarchy_gdk_scale = 1
+local omarchy_monitor_scale = 1
+
+hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
+```
+
+Override Omarchy's larger Steam defaults and place the main client and Friends panel side-by-side with 20-pixel outer margins.
+
+Path: `~/.config/hypr/hyprland.lua`
+
+```lua
+-- Keep Steam's floating windows comfortable on the 1366x768 display.
+-- These override Omarchy's larger defaults and place both windows side-by-side.
+o.window({ class = "steam", title = "Steam" }, { move = { 20, 117 }, size = { 920, 560 } })
+o.window({ class = "steam", title = "Friends List" }, { move = { 960, 117 }, size = { 386, 560 } })
+```
+
+Reload and validate Hyprland:
+
+```bash
+hyprctl reload
+hyprctl configerrors
+```
+
+If Steam was opened before changing `GDK_SCALE`, close any running games, refresh the current user-session environment, and restart Steam:
+
+```bash
+systemctl --user set-environment GDK_SCALE=1
+dbus-update-activation-environment --systemd GDK_SCALE=1
+steam -shutdown
+uwsm-app -- /usr/bin/steam
+```
+
+Verify Steam inherited the correct scale and that both windows use the expected geometry:
+
+```bash
+steam_pid=$(hyprctl clients -j | jq -r '[.[] | select(.class == "steam")][0].pid')
+tr '\0' '\n' < "/proc/$steam_pid/environ" | rg '^GDK_SCALE='
+
+hyprctl clients -j | jq \
+  '[.[] | select(.class == "steam") | {at, size, title}]'
+```
+
+The scale check should print `GDK_SCALE=1`. The main Steam window should report `920x560` at `[20, 117]`, and Friends List should report `386x560` at `[960, 117]`.
+
 Dota 2 launch options:
 
 ```bash
@@ -138,19 +192,99 @@ Path: `~/.config/omarchy/shell.json`
 }
 ```
 
-## Compact Window Layout
+## Compact Window Layout and Focus Border
 
 Path: `~/.config/hypr/looknfeel.lua`
 
 ```lua
-hl.config({
-  general = {
-    gaps_in = 0,
-    gaps_out = 0,
-    border_size = 0,
-  },
-})
+local function load_current_theme_colors()
+  local colors = {}
+  local home = os.getenv("HOME")
+
+  if not home then
+    return colors
+  end
+
+  local file = io.open(home .. "/.local/state/omarchy/current/theme/colors.toml", "r")
+
+  if not file then
+    return colors
+  end
+
+  for line in file:lines() do
+    local name, value = line:match('^%s*([%w_]+)%s*=%s*"([^"]+)"')
+
+    if name then
+      colors[name] = value
+    end
+  end
+
+  file:close()
+  return colors
+end
+
+local function to_hypr_color(value)
+  if not value then
+    return nil
+  end
+
+  local hex = value:match("^#(%x+)$")
+
+  if hex and #hex == 6 then
+    return "rgb(" .. hex .. ")"
+  elseif hex and #hex == 8 then
+    return "rgba(" .. hex .. ")"
+  end
+
+  return value
+end
+
+local theme_colors = load_current_theme_colors()
+local active_border_color = to_hypr_color(theme_colors.color6 or theme_colors.accent)
+local inactive_border_color = to_hypr_color(theme_colors.background)
+local general = {
+  gaps_in = 0,
+  gaps_out = 0,
+  border_size = 3,
+}
+local config = { general = general }
+
+if active_border_color and inactive_border_color then
+  general.col = {
+    active_border = active_border_color,
+    inactive_border = inactive_border_color,
+  }
+
+  config.group = {
+    col = {
+      border_active = active_border_color,
+      border_inactive = inactive_border_color,
+    },
+  }
+end
+
+hl.config(config)
 ```
+
+This keeps the zero-gap layout while adding a 3-pixel border that makes the
+focused window easy to identify. The focused border uses the current Omarchy
+theme's `color6`, falling back to `accent`, while inactive borders use the
+theme's `background`. The same colors are applied to grouped windows.
+
+Colors are read from `~/.local/state/omarchy/current/theme/colors.toml` whenever
+Hyprland reloads, so changing themes also changes the borders without a
+theme-specific override. If the required colors are unavailable, the compact
+layout and border width still apply while Omarchy's generated border colors are
+left unchanged.
+
+Reload and validate the configuration:
+
+```bash
+hyprctl reload
+hyprctl configerrors
+```
+
+`hyprctl configerrors` should return no output.
 
 ## Seven Workspaces
 
