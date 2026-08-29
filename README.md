@@ -120,7 +120,9 @@ omarchy install gaming steam
 
 ### Small-display scaling and window layout
 
-Keep both the GTK application scale and Hyprland monitor scale at `1` so Steam does not inherit a doubled interface on the 1366x768 display.
+Keep both the GTK application scale and Hyprland monitor scale at `1` on the
+1366x768 display. This gives applications the correct base display scale, but
+Steam also has its own Chromium UI scaling control that must be disabled below.
 
 Path: `~/.config/hypr/monitors.lua`
 
@@ -134,14 +136,75 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 
 Override Omarchy's larger Steam defaults and place the main client and Friends panel side-by-side with 20-pixel outer margins.
 
+Steam runs through XWayland and applies its own geometry late in startup. Static
+window rules place both windows correctly at first, but the main window can
+expand again after the client finishes loading. Keep the static rules for the
+initial placement, then re-apply the geometry at several startup checkpoints.
+
 Path: `~/.config/hypr/hyprland.lua`
 
 ```lua
 -- Keep Steam's floating windows comfortable on the 1366x768 display.
--- These override Omarchy's larger defaults and place both windows side-by-side.
-o.window({ class = "steam", title = "Steam" }, { move = { 20, 117 }, size = { 920, 560 } })
-o.window({ class = "steam", title = "Friends List" }, { move = { 960, 117 }, size = { 386, 560 } })
+-- Steam applies its own X11 geometry late in startup, so set the initial rules
+-- and then re-apply them at a few checkpoints while the client finishes loading.
+o.window({ class = "^steam$", title = "^Steam$", xwayland = true }, {
+  move = { 20, 117 },
+  size = { 920, 560 },
+})
+o.window({ class = "^steam$", title = "^Friends List$", xwayland = true }, {
+  move = { 960, 117 },
+  size = { 386, 560 },
+})
+
+local steam_window_geometries = {
+  ["Steam"] = { x = 20, y = 117, width = 920, height = 560 },
+  ["Friends List"] = { x = 960, y = 117, width = 386, height = 560 },
+}
+local steam_geometry_delays = { 1000, 5000, 15000, 30000 }
+
+local function enforce_steam_geometry(address, initial_title, geometry)
+  local window = hl.get_window("address:" .. address)
+
+  if not window or window.class ~= "steam" or window.initial_title ~= initial_title then
+    return
+  end
+
+  hl.dispatch(hl.dsp.window.resize({
+    x = geometry.width,
+    y = geometry.height,
+    relative = false,
+    window = window,
+  }))
+  hl.dispatch(hl.dsp.window.move({
+    x = geometry.x,
+    y = geometry.y,
+    relative = false,
+    window = window,
+  }))
+end
+
+hl.on("window.open", function(window)
+  local initial_title = window.initial_title or window.title
+  local geometry = steam_window_geometries[initial_title]
+
+  if window.class ~= "steam" or not window.xwayland or not geometry then
+    return
+  end
+
+  local address = window.address
+
+  for _, delay_ms in ipairs(steam_geometry_delays) do
+    hl.timer(function()
+      enforce_steam_geometry(address, initial_title, geometry)
+    end, { timeout = delay_ms, type = "oneshot" })
+  end
+end)
 ```
+
+The delayed callbacks use Hyprland's `window.open` event and one-shot timers.
+Each callback resolves the original window address again before changing it,
+so closing Steam during startup safely turns the remaining callbacks into
+no-ops.
 
 Reload and validate Hyprland:
 
@@ -150,26 +213,42 @@ hyprctl reload
 hyprctl configerrors
 ```
 
-If Steam was opened before changing `GDK_SCALE`, close any running games, refresh the current user-session environment, and restart Steam:
+If the desktop session was started before changing `GDK_SCALE`, save any open
+work and relaunch the Omarchy session (or log out and back in) so newly launched
+applications inherit `GDK_SCALE=1`.
+
+Steam can still double the contents inside its correctly sized XWayland windows.
+Disable Steam's separate automatic DPI scaling:
+
+1. Open **Steam → Settings → Interface**.
+2. Turn off **Scale text and icons to match monitor settings (requires restart)**.
+3. Accept Steam's restart prompt.
+
+On the tested August 2026 client, `STEAM_FORCE_DESKTOPUI_SCALING=1` and
+`-forcedesktopscaling 1.0` were ignored. Turning off the Interface option changed
+Steam's Chromium display from `683x384, scale=2` to `1366x768, scale=1`.
+
+Verify Steam's internal UI scale from its Chromium log:
 
 ```bash
-systemctl --user set-environment GDK_SCALE=1
-dbus-update-activation-environment --systemd GDK_SCALE=1
-steam -shutdown
-uwsm-app -- /usr/bin/steam
+rg 'Display\[[0-9]+\].*scale=' \
+  ~/.local/share/Steam/logs/webhelper_gpu.txt | tail -n 1
 ```
 
-Verify Steam inherited the correct scale and that both windows use the expected geometry:
+The latest line should report `bounds=[0,0 1366x768]` and `scale=1`.
+
+Verify that both windows use the expected geometry:
 
 ```bash
-steam_pid=$(hyprctl clients -j | jq -r '[.[] | select(.class == "steam")][0].pid')
-tr '\0' '\n' < "/proc/$steam_pid/environ" | rg '^GDK_SCALE='
-
 hyprctl clients -j | jq \
-  '[.[] | select(.class == "steam") | {at, size, title}]'
+  '[.[] | select(.class == "steam" and
+    (.title == "Steam" or .title == "Friends List")) |
+    {at, size, title}]'
 ```
 
-The scale check should print `GDK_SCALE=1`. The main Steam window should report `920x560` at `[20, 117]`, and Friends List should report `386x560` at `[960, 117]`.
+Wait at least 30 seconds after launching Steam, then verify that the main window
+reports `920x560` at `[20, 117]` and Friends List reports `386x560` at
+`[960, 117]`.
 
 Dota 2 launch options:
 
