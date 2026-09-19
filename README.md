@@ -6,7 +6,8 @@ Personal configuration for Omarchy Quattro.
 
 - CPU: AMD Ryzen 7 5700X
 - GPU: NVIDIA GeForce RTX 5060 Ti
-- Display: BenQ G610HDAL, 1366x768 at 59.79 Hz (`HDMI-A-1`)
+- Primary display: Samsung LS27DG30X, currently running at 1920x1080 at 60 Hz (`DP-1`)
+- Secondary display: BenQ G610HDAL, 1366x768 at 59.79 Hz (`HDMI-A-1`; currently disconnected)
 
 <!-- TODO: Describe additional hardware components. -->
 
