@@ -366,9 +366,13 @@ hyprctl configerrors
 
 `hyprctl configerrors` should return no output.
 
-## Seven Workspaces
+## Ten Workspaces
 
-Configure Hyprland to use only workspaces 1-7 across both desktop monitors. When both displays are connected, workspaces 1-4 belong to `DP-1` and workspaces 5-7 belong to `HDMI-A-1`, matching the previous desktop layout. When only one display is connected, it receives all seven workspaces.
+Keep workspaces 1-10 persistent with Omarchy's default numeric shortcuts enabled.
+This follows the laptop setup: when both desktop monitors are connected, workspace
+7 belongs to the secondary BenQ (`HDMI-A-1`), and workspaces 1-6 and 8-10 belong to
+the primary Samsung (`DP-1`). When only one monitor is connected, it receives all
+ten workspaces.
 
 ### Create the persistent workspaces
 
@@ -390,17 +394,15 @@ if secondary_monitor == primary_monitor then
   secondary_monitor = nil
 end
 
-for workspace = 1, 7 do
+for workspace = 1, 10 do
   local rule = {
     workspace = tostring(workspace),
     persistent = true,
   }
 
-  if secondary_monitor and workspace >= 5 then
+  if secondary_monitor and workspace == 7 then
     rule.monitor = secondary_monitor
-    if workspace == 5 then
-      rule.default = true
-    end
+    rule.default = true
   elseif primary_monitor then
     rule.monitor = primary_monitor
     if workspace == 1 then
@@ -412,26 +414,18 @@ for workspace = 1, 7 do
 end
 ```
 
-Run `hyprctl reload` after connecting or disconnecting a display so the monitor assignments are reevaluated.
+Replace the previous seven-workspace block with this one. In
+`~/.config/hypr/bindings.lua`, remove the old loop that calls `hl.unbind` for
+workspaces 8-10 so Omarchy's default shortcuts remain enabled:
 
-### Disable workspace 8-10 shortcuts
-
-Omarchy provides numeric bindings for workspaces 1-10 by default. Disable switching to or moving windows to workspaces 8-10.
-
-Path: `~/.config/hypr/bindings.lua`
-
-```lua
--- Limit numeric workspace bindings to the seven persistent workspaces.
-for workspace = 8, 10 do
-  local key = "code:" .. tostring(workspace + 9)
-
-  hl.unbind("SUPER + " .. key)
-  hl.unbind("SUPER + SHIFT + " .. key)
-  hl.unbind("SUPER + SHIFT + ALT + " .. key)
-end
-```
+- `Super + 1` through `Super + 9`, and `Super + 0`: switch to workspaces 1-10.
+- Add `Shift`: move the focused window to that workspace and follow it.
+- Add `Shift + Alt`: move the focused window without following it.
 
 ### Reload and validate Hyprland
+
+Run these after applying the configuration or connecting/disconnecting a monitor
+so the monitor assignments are reevaluated:
 
 ```bash
 hyprctl reload
@@ -440,73 +434,28 @@ hyprctl configerrors
 
 `hyprctl configerrors` should return no output.
 
-### Remove an existing workspace 8
-
-If a workspace above 7 was already created, check whether it contains any windows:
-
-```bash
-hyprctl -j clients | jq \
-  '[.[] | select(.workspace.id > 7 and .workspace.id <= 10) |
-  {address, class, title, workspace: .workspace.id}]'
-```
-
-Move each listed window to workspace 7, replacing the example address with the address reported by the previous command:
-
-```bash
-hyprctl dispatch \
-  'hl.dsp.window.move({ workspace = "7", follow = false, window = "address:0xWINDOW_ADDRESS" })'
-```
-
-Window addresses change between sessions and must not be hardcoded.
-
-Activate workspace 7 on `HDMI-A-1` and reload:
-
-```bash
-hyprctl dispatch 'hl.dsp.focus({ workspace = "7" })'
-hyprctl reload
-```
-
 ### Verify the result
 
 ```bash
 hyprctl -j workspaces | jq \
-  'sort_by(.id) | map({id, monitor, windows})'
+  'sort_by(.id) | map({id, monitor, windows, ispersistent})'
 ```
 
-The workspace IDs should be exactly 1-7, with workspaces 1-4 on `DP-1` and 5-7 on `HDMI-A-1`.
+The workspace IDs should be exactly 1-10, all persistent. With both displays
+connected, only workspace 7 should be on `HDMI-A-1`; the rest should be on `DP-1`.
+With only the Samsung connected, all ten should be on `DP-1`.
 
-Confirm that no bindings for workspaces 8-10 remain:
+Check that switching, moving, and silently moving shortcuts are present for all
+ten workspaces:
 
 ```bash
 hyprctl -j binds | jq \
-  '[.[] |
-  select((.description // "") |
-  test("workspace (8|9|10)$"; "i")) |
-  .description]'
+  '[.[] | select((.description // "") |
+    test("^(Switch to|Move window to|Move window silently to) workspace ([1-9]|10)$")) |
+    .description]'
 ```
 
-The expected result is:
-
-```text
-[]
-```
-
-## Experimental: Codex Workspace Shortcut
-
-Path: `~/.config/hypr/bindings.lua`
-
-```lua
-local function codex_workspace(key, workspace, path)
-  local rules = { workspace = workspace .. " silent" }
-
-  o.bind(key, "Codex + terminal (workspace " .. workspace .. ")", hl.dsp.focus({ workspace = workspace }))
-  o.bind(key, nil, hl.dsp.exec_cmd(o.launch('xdg-terminal-exec --dir="' .. path .. '" codex -C "' .. path .. '"'), rules))
-  o.bind(key, nil, hl.dsp.exec_cmd(o.launch('xdg-terminal-exec --dir="' .. path .. '"'), rules))
-end
-
-codex_workspace("SUPER + Prior", "2", os.getenv("HOME") .. "/Projects/MOVER-research-materials") -- Page Up / Re Pág
-codex_workspace("SUPER + Next", "3", os.getenv("HOME") .. "/Projects/shopping-list-ui") -- Page Down / Av Pág
-```
+The result should contain 30 bindings: three actions for each workspace.
 
 ## Experimental: NVIDIA GPU Driver Update
 
