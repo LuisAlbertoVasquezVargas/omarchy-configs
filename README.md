@@ -119,10 +119,10 @@ Restart Neovim or reopen Neo-tree to apply the change.
 omarchy install gaming steam
 ```
 
-### Small-display scaling and window layout
+### Steam scaling and window layout (1920x1080)
 
 Keep both the GTK application scale and Hyprland monitor scale at `1` on the
-1366x768 display. This gives applications the correct base display scale, but
+1920x1080 Samsung display. This gives applications the correct base display scale, but
 Steam also has its own Chromium UI scaling control that must be disabled below.
 
 Path: `~/.config/hypr/monitors.lua`
@@ -135,7 +135,10 @@ hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
 ```
 
-Override Omarchy's larger Steam defaults and place the main client and Friends panel side-by-side with 20-pixel outer margins.
+Place the main client (1280x900) and Friends panel (520x900) side by side on the
+primary Samsung display, with 40-pixel outer margins and a 40-pixel gap. These
+sizes replace the smaller 920x560 and 386x560 layout used on the BenQ. This layout
+is intended for the Samsung at 1920x1080 and scale 1.
 
 Steam runs through XWayland and applies its own geometry late in startup. Static
 window rules place both windows correctly at first, but the main window can
@@ -145,21 +148,21 @@ initial placement, then re-apply the geometry at several startup checkpoints.
 Path: `~/.config/hypr/hyprland.lua`
 
 ```lua
--- Keep Steam's floating windows comfortable on the 1366x768 display.
+-- Keep Steam's floating windows comfortable on the 1920x1080 Samsung display.
 -- Steam applies its own X11 geometry late in startup, so set the initial rules
 -- and then re-apply them at a few checkpoints while the client finishes loading.
 o.window({ class = "^steam$", title = "^Steam$", xwayland = true }, {
-  move = { 20, 117 },
-  size = { 920, 560 },
+  move = { 40, 103 },
+  size = { 1280, 900 },
 })
 o.window({ class = "^steam$", title = "^Friends List$", xwayland = true }, {
-  move = { 960, 117 },
-  size = { 386, 560 },
+  move = { 1360, 103 },
+  size = { 520, 900 },
 })
 
 local steam_window_geometries = {
-  ["Steam"] = { x = 20, y = 117, width = 920, height = 560 },
-  ["Friends List"] = { x = 960, y = 117, width = 386, height = 560 },
+  ["Steam"] = { x = 40, y = 103, width = 1280, height = 900 },
+  ["Friends List"] = { x = 1360, y = 103, width = 520, height = 900 },
 }
 local steam_geometry_delays = { 1000, 5000, 15000, 30000 }
 
@@ -236,7 +239,7 @@ rg 'Display\[[0-9]+\].*scale=' \
   ~/.local/share/Steam/logs/webhelper_gpu.txt | tail -n 1
 ```
 
-The latest line should report `bounds=[0,0 1366x768]` and `scale=1`.
+On the Samsung, the latest line should report `bounds=[0,0 1920x1080]` and `scale=1`.
 
 Verify that both windows use the expected geometry:
 
@@ -248,8 +251,8 @@ hyprctl clients -j | jq \
 ```
 
 Wait at least 30 seconds after launching Steam, then verify that the main window
-reports `920x560` at `[20, 117]` and Friends List reports `386x560` at
-`[960, 117]`.
+reports `1280x900` at `[40, 103]` and Friends List reports `520x900` at
+`[1360, 103]`.
 
 Dota 2 launch options:
 
