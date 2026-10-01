@@ -275,6 +275,88 @@ Path: `~/.config/omarchy/shell.json`
 }
 ```
 
+## Agents Widget: Codex Limits Unavailable
+
+Confirmed on September 30, 2026 with Omarchy `4.0.4-1` and Codex CLI
+`0.159.3`. The panel showed **Codex limits unavailable** and `account/read`,
+while local token totals still appeared. No earlier fix for this issue was
+found in this repository's history or in the installed user plugins.
+
+The installed Codex collector combines `select()` on a pipe with Python's
+buffered `readline()`. When a notification and an RPC response arrive together,
+`readline()` can buffer the response while `select()` sees an empty pipe. The
+collector then times out even though Codex already replied. A partial line can
+also block `readline()` beyond the intended timeout.
+
+[scripts/codex-usage-collector.py](scripts/codex-usage-collector.py) reuses the
+installed collector's scanning, cache, and output format, replacing only its RPC
+reader with raw pipe reads, explicit line buffering, and a monotonic deadline.
+It also reports RPC errors and unexpected server exits. Codex's
+[official app-server documentation](https://learn.chatgpt.com/docs/app-server#authentication-endpoints)
+documents the account and rate-limit RPCs used by the collector.
+
+### Install or reapply
+
+From this repository, inside the running Omarchy desktop session:
+
+```bash
+python3 scripts/install-agents-usage-fix.py
+```
+
+The installer backs up `shell.json` and any existing user clone under
+`~/.local/state/omarchy/backups/agents-usage-<timestamp>/`, then uses
+`omarchy plugin clone omarchy.agents` on the first install. The bar switches to
+`<username>.agents`. Its `Main.qml` calls a private copy of the installed updater,
+which routes only Codex through the patched reader. Other providers retain their
+packaged collectors. Files under `/usr/share/omarchy/` stay untouched. The
+installer restarts Omarchy Shell (the bar briefly disappears) because a plugin
+rescan alone retained the old imported `Main.qml` during testing.
+
+The user clone survives package updates. Its QML and private updater are copies,
+so review them after Omarchy updates; rerunning the installer refreshes the
+private updater but preserves the clone's QML customizations. The Python wrapper
+loads the installed Codex collector each run and depends on its internal
+`rpc_request`, `fetch_codex_rpc`, and `main` functions remaining compatible.
+The stock `omarchy agent usage-update` command still uses the stock reader;
+use the clone's updater below when manually refreshing this fix.
+
+### Verify
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+"$HOME/.config/omarchy/plugins/$USER.agents/usage-update" --force codex
+jq '{updatedAt, tierLabel, limits, usageStatusText}' \
+  "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/agents/usage/codex.json"
+```
+
+Reopen the Agents panel. `usageStatusText` should be empty, and `limits` should
+contain the quota windows returned by your account. The live test returned a
+weekly limit at 45% used and a reset timestamp; the original reader returned
+`account/read`. After restarting the shell, a refresh through the running widget
+also succeeded, reporting 46% used with no error. The tests cover a notification and response in one pipe write,
+a fragmented response, a partial-line timeout, an RPC error, and EOF.
+
+To check the running widget's own refresh, run
+`omarchy-shell omarchy.agents refresh`, wait a few seconds, and inspect the same
+JSON file. If a manual run works but the widget restores `account/read`, run
+`omarchy restart shell` to clear cached QML, then repeat this check.
+
+The daily/model token totals come from local sessions and are separate from
+account-wide quota percentages. A missing second quota window is valid if the
+server returns only one. This fix does not change the default 900-second full
+refresh interval; opening the panel requests fresh limits.
+
+### Roll back
+
+```bash
+omarchy plugin enable omarchy.agents
+omarchy agent usage-update codex
+```
+
+This switches back to the packaged widget and collector. The inactive user clone
+and timestamped backup remain available. Once the packaged reader is fixed,
+switch back this way to receive future widget changes normally.
+
 ## Compact Window Layout and Focus Border
 
 Path: `~/.config/hypr/looknfeel.lua`
