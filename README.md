@@ -260,6 +260,58 @@ Dota 2 launch options:
 SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
 ```
 
+### Conditional Steam and Dota 2 workspaces
+
+Install the event handler from this repository:
+
+```bash
+install -m 644 scripts/steam-workspaces.lua ~/.config/hypr/steam-workspaces.lua
+```
+
+Add this after the Steam geometry rules in `~/.config/hypr/hyprland.lua`:
+
+```lua
+require("hypr.steam-workspaces")
+```
+
+The Steam bootstrap update/install window always opens silently on workspace 1,
+including when workspaces 1 or 2 are occupied or Steam is already running.
+Static rules place it there before its first frame; event handlers also catch
+late class/title updates.
+
+For the main Steam and Dota windows, the handler checks that workspaces
+1 and 2 have no other mapped windows. If both are empty, Steam client windows
+(including Friends, chat and dialogs) go to workspace 1 without switching focus,
+and Dota 2 goes to workspace 2 and follows focus. The opening window itself does
+not count as an occupant. Other Steam games are unaffected.
+
+The decision lasts while any Steam or Dota window remains open. If either
+workspace was occupied at startup, main-client and game placement stays unchanged
+for that session. The updater still goes to workspace 1.
+Routing also stops if an unrelated window occupies either workspace when a new
+Steam or Dota window opens. Close all Steam and Dota windows to allow a fresh
+check. Reloading the config does not adopt an already-running session or move
+existing windows; close and reopen Steam with both workspaces empty to activate.
+
+Matching uses the client classes `steam`, `steamwebhelper`, and `SteamUpdater`
+(the bootstrap update/install window), and Dota classes
+`steam_app_570`, `dota2`, and `dota 2` (case-insensitive). Check `hyprctl clients -j`
+if a different game backend reports another class.
+For an XWayland bootstrap window with no class yet or a generic Steam class,
+exact titles `Updating Steam` and `Installing Steam` (with optional trailing dots
+or an ellipsis) also match.
+The handler listens for late class/title updates, including a generic Steam
+window identifying itself as the updater. After updater placement, further
+metadata changes do not undo manual moves.
+
+Validate the handler and reload the desktop configuration:
+
+```bash
+lua tests/test_steam_workspaces.lua
+hyprctl reload
+hyprctl configerrors
+```
+
 ## Clock Format
 
 Migrates the previous Waybar clock format to Omarchy Shell.
