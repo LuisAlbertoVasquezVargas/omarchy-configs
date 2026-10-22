@@ -603,7 +603,3 @@ omarchy update
 omarchy system reboot
 nvidia-smi
 ```
-
-## Apply Configs
-
-> **TODO:** Adapt `scripts/apply_configs.py` for Omarchy Quattro.
