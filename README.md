@@ -113,6 +113,40 @@ return {
 
 Restart Neovim or reopen Neo-tree to apply the change.
 
+## Codex CLI Approval Defaults
+
+Make **Approve for me** the default for new Codex CLI sessions, matching the
+laptop setup.
+
+Path: `~/.codex/config.toml`
+
+Back up the existing file, then merge these settings at the top level, before
+any TOML table headers. Update existing keys rather than duplicating them, and
+preserve unrelated settings.
+
+```toml
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+sandbox_mode = "workspace-write"
+```
+
+Eligible approval requests go through automatic review while the workspace
+sandbox remains enabled. These defaults apply to new sessions; existing
+sessions can retain their previous settings. Explicit CLI or profile overrides
+and managed requirements can take precedence.
+
+Validate that Codex loads the configuration:
+
+```bash
+codex features list
+```
+
+Start a new Codex CLI session and use `/permissions` to check that **Approve for
+me** is selected.
+
+Official references: [Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review)
+and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
 ## Steam
 
 ```bash
