@@ -298,8 +298,13 @@ Matching uses the client classes `steam`, `steamwebhelper`, and `SteamUpdater`
 `steam_app_570`, `dota2`, and `dota 2` (case-insensitive). Check `hyprctl clients -j`
 if a different game backend reports another class.
 For an XWayland bootstrap window with no class yet or a generic Steam class,
-exact titles `Updating Steam` and `Installing Steam` (with optional trailing dots
-or an ellipsis) also match.
+titles `Updating Steam` and `Installing Steam` (with optional trailing dots,
+an ellipsis, or surrounding whitespace) also match, including the initial title.
+The October 2026 `xwin` updater reports an empty class and the title `Steam`.
+That exact XWayland combination also opens silently on workspace 1, with initial
+focus disabled. This was verified using Steam's actual updater UI child.
+Checks at 100, 500, 1500, and 3000 milliseconds after opening resolve the window
+again to catch delayed mapping and metadata. Closed windows are ignored.
 The handler listens for late class/title updates, including a generic Steam
 window identifying itself as the updater. After updater placement, further
 metadata changes do not undo manual moves.
@@ -310,6 +315,85 @@ Validate the handler and reload the desktop configuration:
 lua tests/test_steam_workspaces.lua
 hyprctl reload
 hyprctl configerrors
+```
+
+### Disable Super+W while Dota 2 is running
+
+Install the close-window guard:
+
+```bash
+install -m 755 scripts/dota-close-guard.sh ~/.config/hypr/dota-close-guard.sh
+```
+
+Add to `~/.config/hypr/bindings.lua`:
+
+```lua
+-- Override Omarchy's default Close window binding.
+hl.unbind("SUPER + W")
+o.bind("SUPER + W", "Close window (disabled while Dota 2 runs)",
+  '"' .. os.getenv("HOME") .. '/.config/hypr/dota-close-guard.sh"')
+```
+
+The guard checks for your native `dota2` process on every press. While Dota 2
+is running, Super+W does nothing on every workspace, including when another
+application has focus. When the game exits, Super+W closes the focused window
+normally. Steam alone and other games do not block it. A process lookup error
+also prevents closing. The shortcut stays consumed while blocked.
+
+```bash
+hyprctl reload
+hyprctl configerrors
+```
+
+## Chat App Workspaces
+
+Route newly opened Brave web-app windows to these workspaces:
+
+| App | Workspace | Shortcut |
+| --- | --- | --- |
+| WhatsApp | 10 | `Super + 0` |
+| Slack | 9 | `Super + 9` |
+| Discord | 8 | `Super + 8` |
+
+Workspace 10 is the tenth numeric workspace, selected with the `0` key.
+An app moves only when its destination has no other mapped windows, including
+other windows of the same app. The opening window itself does not count.
+Each destination is checked independently. Placement is silent; occupied
+workspaces leave the new window where it opened. Later metadata changes do not
+retry a blocked placement or undo a manual move. Ordinary browser tabs are
+unaffected. These rules match the Brave web apps installed above.
+
+From this repository:
+
+```bash
+install -m 644 scripts/chat-workspaces.lua ~/.config/hypr/chat-workspaces.lua
+```
+
+Add to `~/.config/hypr/hyprland.lua`:
+
+```lua
+require("hypr.chat-workspaces")
+```
+
+Reloading leaves existing windows in place. Close and reopen an app to apply.
+
+```bash
+lua tests/test_chat_workspaces.lua
+hyprctl reload
+hyprctl configerrors
+```
+
+To verify, open an app with its destination empty and check that it moves there
+without switching focus. Then place another window on that destination and open
+a new app window: it should stay on the workspace where it opened. Moving an app
+manually must not cause it to return to its assigned workspace.
+
+Inspect actual window placement and classes with:
+
+```bash
+hyprctl -j clients | jq \
+  '[.[] | select(.class | test("^brave-(web\\.whatsapp\\.com|app\\.slack\\.com|discord\\.com)__")) |
+    {class, title, workspace: .workspace.id}]'
 ```
 
 ## Clock Format

@@ -1,5 +1,6 @@
+local next_address = 0
 -- Run from the repository root: lua tests/test_steam_workspaces.lua
-local clients, moves, opened, events
+local clients, moves, opened, events, timers
 -- Static rules are checked in Hyprland; these tests exercise event fallback.
 o = { window = function() end }
 hl = {
@@ -8,6 +9,12 @@ hl = {
     if event == "window.open" then opened = callback end
   end,
   get_windows = function() return clients end,
+  get_window = function(selector)
+    for _, w in ipairs(clients) do
+      if selector == "address:" .. w.address then return w end
+    end
+  end,
+  timer = function(callback) timers[#timers + 1] = callback end,
   dsp = { window = { move = function(args) return args end } },
   dispatch = function(args)
     moves[#moves + 1] = args
@@ -16,13 +23,14 @@ hl = {
 }
 
 local function reset(existing)
-  clients, moves, events = existing or {}, {}, {}
+  clients, moves, events, timers = existing or {}, {}, {}, {}
   dofile("scripts/steam-workspaces.lua")
 end
 
 local function window(class, workspace)
+  next_address = next_address + 1
   return { class = class, workspace = { id = workspace }, mapped = true,
-    address = tostring({}) }
+    address = tostring(next_address) }
 end
 
 local function open(class, workspace)
@@ -156,4 +164,52 @@ browser.title = "Updating Steam..."
 browser.xwayland = true
 events["window.title"](browser)
 assert(#moves == 0, "browser titles must not match bootstrap fallback")
+reset()
+bootstrap = window("steam", 4)
+bootstrap.xwayland = true
+bootstrap.title = "Updating Steam...   "
+bootstrap.mapped = false
+clients[#clients + 1] = bootstrap
+opened(bootstrap)
+assert(#moves == 0)
+bootstrap.mapped = true
+for _, callback in ipairs(timers) do callback() end
+assert(#moves == 1 and bootstrap.workspace.id == 1, "retry after mapping must place updater once")
+bootstrap.workspace.id = 6
+for _, callback in ipairs(timers) do callback() end
+assert(#moves == 1, "retries must respect manual moves")
+
+reset()
+bootstrap = window("steam", 4)
+bootstrap.xwayland = true
+bootstrap.initial_title = "Updating Steam ... "
+bootstrap.title = "Steam"
+clients[#clients + 1] = bootstrap
+opened(bootstrap)
+assert(#moves == 1 and bootstrap.workspace.id == 1, "initial updater title must remain identifiable")
+-- Actual October 2026 xwin bootstrap metadata: no WM_CLASS, title Steam.
+for _, occupied in ipairs({ 1, 2 }) do
+  reset({ window("foot", occupied) })
+  bootstrap = window("", 4)
+  bootstrap.xwayland = true
+  bootstrap.title = "Steam"
+  bootstrap.initial_title = "Steam"
+  clients[#clients + 1] = bootstrap
+  opened(bootstrap)
+  assert(#moves == 1 and bootstrap.workspace.id == 1 and not moves[1].follow,
+    "classless Steam bootstrap must always move silently to workspace 1")
+  bootstrap.workspace.id = 5
+  events["window.title"](bootstrap)
+  assert(#moves == 1, "classless updater must preserve later manual moves")
+end
+reset({ window("foot", 2) })
+local normal = open("brave-browser", 4)
+normal.xwayland = true
+normal.title = "Steam"
+events["window.title"](normal)
+assert(#moves == 0, "Steam title on a different app must not match")
+local native = open("", 4)
+native.title = "Steam"
+events["window.title"](native)
+assert(#moves == 0, "classless fallback must be limited to XWayland")
 print("Steam workspace tests passed")
