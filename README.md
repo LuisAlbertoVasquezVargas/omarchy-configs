@@ -11,6 +11,10 @@ Personal configuration for Omarchy Quattro.
 
 <!-- TODO: Describe additional hardware components. -->
 
+## Installation USB
+
+See [Create an Omarchy Installation USB](INSTALLATION-USB.md) for the steps to prepare a bootable USB.
+
 ## Clone This Repository
 
 ```bash
