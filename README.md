@@ -39,13 +39,48 @@ are checked; affected files are restored if those checks fail. A failed step
 stops the script, while earlier successful steps remain applied. Package
 installations and theme changes are not automatically undone.
 
+`setup.py` checks syntax, installed components, and configuration results as
+part of applying each step. It retains backups and rollback for failed changes.
+
+The files under `config/hypr/` are Lua source fragments read by `setup.py`.
+Setup validates and appends each fragment to its corresponding user file:
+
+| Source fragment | Destination under `~/.config/hypr/` | Purpose |
+| --- | --- | --- |
+| [compact-layout.lua](config/hypr/compact-layout.lua) | `looknfeel.lua` | Zero window gaps, three-pixel borders, and theme-based focus colors. |
+| [displays.lua](config/hypr/displays.lua) | `monitors.lua` | Samsung/BenQ display profiles and GTK scale 1. |
+| [dota-close-binding.lua](config/hypr/dota-close-binding.lua) | `bindings.lua` | Route Super+W through the helper that blocks closing while Dota runs. |
+
+Hyprland reads the installed user files. Keep these repository fragments so
+setup can reproduce the configuration, compare it on later runs, and validate
+future changes.
+
+Console output is labeled by README section, such as `[Brave]` or `[Steam]`.
+Each section has `START`, `FINISHED`, or `FAILED` markers and an elapsed time;
+existing-component and matching-setting skips remain explicit. Commands run
+synchronously, report their exit status, and show a PID and elapsed time after
+every 15 seconds without output. Setup waits for each command before continuing
+and stops on failure. Interactive commands retain terminal input, including
+normal `sudo` password prompts.
+
+Every run prints its log directory under
+`${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-configs/logs/<timestamp>/`.
+`setup.log` contains the full run; numbered files such as `03-brave.log` and
+`10-steam.log` contain only that section. Command stdout and stderr are saved,
+including query/validation stdout that is hidden from the console. Logs remain
+available after a failure. Desktop services restarted by native helpers keep
+their normal lifecycle; setup waits for the helper's readiness check, not for
+the service to exit.
+
 The setup covers the sections below through **Displays and Ten Workspaces per
 Monitor**. Application sign-ins, synchronization, visual checks, and the
-experimental NVIDIA update remain manual. Older workarounds are preserved in
-[Quattro 4.0 Historical Reference](docs/QUATTRO-4.0.md), not installed by setup.
+experimental NVIDIA update remain manual. Earlier implementations remain in
+Git history at commit `563f023`. Future preferences are listed under
+[Ideas](#ideas).
 
-Implementation has been checked against the official `v4.5.0` source. It has
-not yet been applied and visually validated on this PC running 4.5.0.
+Implementation has been checked against the official `v4.5.0` source. The
+Agents weekly display and Steam UI scale 1 were verified live on this PC
+running 4.5.0-3. Remaining manual checks are listed in their respective sections.
 
 ## Installation USB
 
@@ -206,24 +241,58 @@ and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-
 
 ## Steam
 
-Setup skips an existing `steam` executable. Otherwise it uses Omarchy's
-installer so the correct graphics dependencies are selected:
+Setup skips an existing `steam` executable. Otherwise it runs the foreground
+stages of Omarchy 4.5's Steam installer, in order, so the native helper selects
+the correct graphics dependencies:
 
 ```bash
-omarchy install gaming steam
+omarchy install gaming gpu-lib32
+omarchy pkg add steam
+omarchy lifecycle dispatch post-install steam
 ```
 
-The installer starts Steam after installation. Account sign-in, games, and
-launch options remain manual. Existing Steam preferences are not rewritten.
+Each command is monitored and must finish successfully before setup continues.
+The `steam` executable is checked afterward. Unlike
+[`omarchy install gaming steam`](https://github.com/basecamp/omarchy/blob/v4.5.0/bin/omarchy-install-gaming-steam),
+setup leaves Steam closed: the stock installer's detached client launch can
+download/update the client after the installer returns, independently of setup.
+Launch Steam manually afterward to finish client initialization and sign in.
+Client downloads, games, and launch options remain manual. Existing Steam
+preferences are not rewritten.
+
+### Steam UI Scaling
 
 The display configuration below sets GTK and monitor scale to 1 on this PC.
-If Steam still appears oversized, review **Steam → Settings → Interface →
-Scale text and icons to match monitor settings**, then restart Steam after
-changing the setting. Verify the current client's behavior on 4.5.0.
+An already running desktop session can still pass the previous `GDK_SCALE=2`
+to Steam, doubling text and icons in the main, Friends, and chat windows even
+when Hyprland reports monitor scale 1. After applying the display configuration,
+log out and back in, then launch Steam again so it inherits the new scale.
 
-The old fixed Steam/Friends geometry, delayed repositioning, forced NVIDIA
-ICD launch option, and conditional Steam/Dota workspace routing are retained
-only in the historical reference. They have not been validated for Quattro RS.
+If Steam still appears oversized, open **Steam → Settings → Interface**, turn
+off **Scale text and icons to match monitor settings**, and accept Steam's
+restart prompt.
+
+Check the session environment and Steam's own display-scale log:
+
+```bash
+systemctl --user show-environment | rg '^GDK_SCALE='
+rg 'Display\[[0-9]+\].*scale=' ~/.local/share/Steam/logs/webhelper_gpu.txt | tail -n 1
+```
+
+For the Samsung, expect `GDK_SCALE=1` and a new Steam log entry with
+`bounds=[0,0 1920x1080]` and `scale=1`. Check the UI scale before adding window
+geometry rules; resizing a window does not reduce its text or icon scale.
+
+### Dota 2 Launch Options
+
+Set these manually in Dota 2's Steam launch options:
+
+```text
+SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
+```
+
+Restored unchanged from commit `563f023`. These personal launch options have
+not yet been revalidated on Omarchy 4.5.0. `setup.py` does not edit them.
 
 ## Disable Super+W While Dota 2 Runs
 
@@ -264,13 +333,55 @@ The shell reloads automatically. Check the date, week number, and time visually.
 
 ## Agents Widget
 
-Setup reports the installed Omarchy version and leaves Agents unchanged,
-including existing user-owned clones and provider settings. It does not install
-the old quota collector or the laptop's experimental weekly display change.
+Setup installs the weekly-percentage/countdown display change below in a
+user-owned Agents clone. Existing clones and provider settings are preserved;
+only the reviewed display bindings are changed. A matching active clone is
+skipped. The old quota collector is not installed.
 
-Use Omarchy 4.5's collector first. If the old limits-unavailable issue reappears,
-reproduce it on that version before reviewing the historical workaround.
 Account setup stays manual.
+
+### Weekly Percentage and Reset Countdown
+
+Adapted from the laptop's [Agents display change in commit
+66affcc](https://github.com/LuisAlbertoVasquezVargas/omarchy-configs-laptop/commit/66affcc57b9773a4343707cf59e74190a6bfb50c).
+The Weekly row shows the allowance **used** beside its reset countdown as soon
+as the panel opens:
+
+```text
+Weekly  ━━━━━░░░░░  35% · 3d 19h
+```
+
+Session, monthly, and model-scoped rows retain their existing display. Native
+usage collection, provider preferences, tooltips, and bar placement are
+preserved. The value reserves room for `100% · 00h 00m` and expands for longer
+text, using Omarchy's locale number formatter and plain-text rendering.
+
+The focused [QML patch](config/omarchy/agents-weekly.patch) changes only the
+`CompactLimit` value and its width measurement in the user-owned clone:
+
+```text
+~/.config/omarchy/plugins/<username>.agents/Panel.qml
+```
+
+Running `python setup.py` now applies this change in its **Agents Widget**
+step. Setup reuses an existing clone whose manifest identifies it as cloned
+from `omarchy.agents`. If absent, it stages the built-in panel and creates a
+clone with `omarchy plugin clone omarchy.agents` after validation. Packaged
+files under `/usr/share/omarchy/` remain unchanged.
+
+The staged QML syntax is checked with `/usr/lib/qt6/bin/qmlformat --ignore-settings`
+before installation. Unexpected patch context stops the step for review.
+Before cloning or writing, setup backs up
+`shell.json` and any existing cloned `Panel.qml` outside the watched tree, under
+`${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/backups/agents-widget-<timestamp>/`.
+Setup installs the validated panel, restarts the shell, and verifies that the
+clone is enabled. A failed installation restores the saved files, removes a
+clone created by that attempt, and restarts the previous configuration.
+
+Check that the clone is enabled with `omarchy plugin list --json`. Open Agents
+and verify that the weekly percentage and countdown fit without hovering;
+visual verification remains manual. Subsequent setup runs skip a matching
+active clone and print that the weekly display is already configured.
 
 ## Compact Window Layout and Focus Border
 
@@ -311,8 +422,7 @@ into `~/.config/omarchy/plugins/<username>.workspaces/` and updates its button
 list. The tenth label is `0`; active layout glyphs and guest workspaces are
 preserved. This changes bar buttons, not the native workspace manager.
 
-The staged widget is checked with QML formatting and Node.js regression tests
-before installation. Backups live under
+The staged widget's QML syntax is checked before installation. Backups live under
 `${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/backups/workspaces-widget-<timestamp>/`,
 outside the watched plugin tree. An active, matching clone is skipped. The
 shell is restarted after a change; failure restores the previous files and
@@ -330,7 +440,17 @@ hyprctl -j workspaces | jq 'sort_by(.id) | map({id, monitor, windows})'
 
 Verify resolutions, non-overlapping positions, shortcuts on each monitor,
 all ten buttons, and unplug/reconnect behavior. Hardware and visual checks
-remain outstanding until this PC is running 4.5.0.
+for the disconnected BenQ and monitor hotplug behavior remain outstanding.
+
+## Ideas
+
+These are future preferences; setup does not apply them:
+
+- **Steam window layout:** arrange Library, Friends, and chat comfortably
+  within the screen, using sizes suited to the connected display.
+- **Optional app placement:** place Steam, Dota, and chat apps into chosen
+  workspace slots when available, respecting manual moves, avoiding unwanted
+  focus changes, and preserving Omarchy's native ten workspaces per monitor.
 
 ## Experimental: NVIDIA GPU Driver Update
 
@@ -350,15 +470,19 @@ workarounds after the update instead of reinstalling the old configuration tree.
 Follow the root [AGENTS.md](AGENTS.md). Implement the requested setup steps,
 review them, and apply to the live desktop only when asked. Preserve unrelated
 settings, validate each changed component, and report remaining manual checks.
-Old source and instructions remain in Git history and the historical reference.
+Earlier source and instructions remain in Git history at commit `563f023`.
 
 ## Validate the Repository
 
+Check source syntax before applying changes:
+
 ```bash
 source .venv/bin/activate
-python -m unittest discover -s tests -v
+python -m py_compile setup.py
+luac -p config/hypr/*.lua
+bash -n scripts/dota-close-guard.sh
 ```
 
-Tests use temporary directories and mock installation and desktop commands.
-The workspace-button regressions also run with Node.js. They do not install
-packages, restart the real shell, update Omarchy, or reboot the PC.
+These commands check syntax without applying desktop configuration. Setup also
+validates staged QML and Lua before writing and checks installation results.
+Application behavior and visual checks remain manual.

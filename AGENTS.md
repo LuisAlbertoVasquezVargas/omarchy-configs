@@ -22,10 +22,17 @@ numbering, monitor migration, and workspace layout modes. A user-owned widget
 clone may show all ten buttons. Do not install the retired shared-workspace
 rules or Steam/chat routing from the 4.0 setup.
 
-Keep Agents setup report-only and preserve existing user-owned clones. Old
-quota-collector, Steam geometry, and chat-placement workarounds are historical
-reference in `docs/QUATTRO-4.0.md`; review and validate them before reintroducing
-them. Do not restore a full `.config` snapshot or the retired installer.
+Agents setup installs the reviewed weekly-percentage/countdown display patch
+in a user-owned clone, preserving unrelated clone edits and provider settings.
+Skip a matching active clone; validate staged QML syntax before writing,
+back up changes outside the plugin tree, and roll back failed installations.
+Keep validation focused on syntax and runtime installation/configuration checks.
+Do not add unit-test suites unless requested.
+Keep Omarchy's native usage collector. Old quota-collector, Steam geometry,
+and chat-placement implementations remain in Git history at commit `563f023`;
+review and validate them before reintroducing them. The README's Ideas section
+records future preferences without enabling them. Do not restore a full
+`.config` snapshot or the retired installer.
 
 Application sign-ins, synchronization, and visual/hardware checks remain manual.
 Battery, touchpad, and laptop display settings do not belong in this desktop

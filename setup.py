@@ -1,29 +1,141 @@
 # setup.py
 
+import codecs
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 import getpass
 import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 import tomlkit
 
 THEME_NAME = "Ghost Pastel"
 THEME_URL = "https://github.com/row-huh/omarchy-ghost-pastel-theme"
+COMMAND_HEARTBEAT_SECONDS = 15
+
+class StepOutput:
+    def __init__(self, label, terminal, logs):
+        self.prefix = f"[{label}] "
+        self.terminal = terminal
+        self.logs = logs
+        self.line_start = True
+
+    def log_only(self, message):
+        for log in self.logs:
+            log.write(message)
+            log.flush()
+
+    def write(self, message):
+        for line in message.splitlines(keepends=True):
+            labeled = (self.prefix if self.line_start else "") + line
+            self.terminal.write(labeled)
+            self.log_only(labeled)
+            self.line_start = line.endswith(("\n", "\r"))
+        self.flush()
+        return len(message)
+
+    def flush(self):
+        self.terminal.flush()
+        for log in self.logs:
+            log.flush()
+
+def write_command_output(destination, message, hidden):
+    if hidden:
+        if isinstance(destination, StepOutput):
+            destination.log_only(message)
+    else:
+        destination.write(message)
+        destination.flush()
+
+def run_command(command, *, input=None, capture_output=False, quiet=False, merge_errors=False, check=True, env=None):
+    description = shlex.join(command)
+    print(f"$ {description}", flush=True)
+    started = time.monotonic()
+    last_output = started
+    # Independent file reads preserve the child's write position and avoid
+    # waiting for desktop services that inherit its output to close a pipe.
+    with (
+        tempfile.TemporaryFile() as output,
+        tempfile.TemporaryFile() as errors,
+        tempfile.TemporaryFile() as source,
+    ):
+        if input is not None:
+            source.write(input.encode("utf-8"))
+            source.seek(0)
+        with subprocess.Popen(
+            command, stdin=source if input is not None else None,
+            stdout=output, stderr=subprocess.STDOUT if merge_errors else errors, env=env,
+        ) as process:
+            streams = [(output, sys.stdout, capture_output or quiet), (errors, sys.stderr, False)]
+            offsets = [0, 0]
+            decoders = [codecs.getincrementaldecoder("utf-8")(errors="replace") for _ in streams]
+            line_ended = [True, True]
+            while True:
+                finished = process.poll() is not None
+                for index, (stream, destination, hidden) in enumerate(streams):
+                    while chunk := os.pread(stream.fileno(), 65536, offsets[index]):
+                        offsets[index] += len(chunk)
+                        message = decoders[index].decode(chunk)
+                        write_command_output(destination, message, hidden)
+                        if message:
+                            line_ended[index] = message.endswith(("\n", "\r"))
+                        last_output = time.monotonic()
+                    if finished:
+                        tail = decoders[index].decode(b"", final=True)
+                        write_command_output(destination, tail, hidden)
+                        if tail or not line_ended[index]:
+                            write_command_output(destination, "\n", hidden)
+                if finished:
+                    break
+                now = time.monotonic()
+                if now - last_output >= COMMAND_HEARTBEAT_SECONDS:
+                    print(f"Still running (PID {process.pid}, {now - started:.0f}s): {description}", flush=True)
+                    last_output = now
+                try:
+                    process.wait(timeout=0.1)
+                except subprocess.TimeoutExpired:
+                    pass
+            output.seek(0)
+            errors.seek(0)
+            result = subprocess.CompletedProcess(
+                command, process.returncode,
+                stdout=output.read().decode("utf-8", errors="replace") if capture_output else None,
+                stderr=errors.read().decode("utf-8", errors="replace"),
+            )
+    print(f"Command finished (exit {result.returncode}, {time.monotonic() - started:.1f}s).", flush=True)
+    if check:
+        result.check_returncode()
+    return result
+
+def command_output(command, **options):
+    return run_command(command, capture_output=True, **options).stdout
+
+def run_step(number, total, label, actions, log_directory, run_log):
+    filename = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+    log_file = log_directory / f"{number:02d}-{filename}.log"
+    with log_file.open("x", encoding="utf-8") as step_log:
+        output = StepOutput(label, sys.stdout, [run_log, step_log])
+        with redirect_stdout(output), redirect_stderr(output):
+            started = time.monotonic()
+            print(f"START {number}/{total} | Log: {log_file}")
+            try:
+                for action in actions:
+                    action()
+            except BaseException as error:
+                print(f"\nFAILED after {time.monotonic() - started:.1f}s: {error}")
+                raise
+            print(f"FINISHED after {time.monotonic() - started:.1f}s\n")
 
 def omarchy_output(*arguments):
-    result = subprocess.run(
-        ["omarchy", *arguments],
-        check=True,
-        text=True,
-        stdout=subprocess.PIPE,
-    )
-    return result.stdout.strip()
+    return command_output(["omarchy", *arguments]).strip()
 
 def install_ghost_pastel():
     installed_themes = omarchy_output("theme", "list").splitlines()
@@ -33,7 +145,7 @@ def install_ghost_pastel():
         return
 
     print("Installing Ghost Pastel...", flush=True)
-    subprocess.run(["omarchy", "theme", "install", THEME_URL], check=True)
+    run_command(["omarchy", "theme", "install", THEME_URL])
 
     if THEME_NAME not in omarchy_output("theme", "list").splitlines():
         raise RuntimeError("Ghost Pastel was not found after installation.")
@@ -46,7 +158,7 @@ def install_brave():
         return
 
     print("Installing Brave...", flush=True)
-    subprocess.run(["omarchy", "install", "browser", "brave"], check=True)
+    run_command(["omarchy", "install", "browser", "brave"])
 
     if shutil.which("brave") is None:
         raise RuntimeError("Brave was not found after installation.")
@@ -71,7 +183,7 @@ def set_brave_default():
     config_directory.mkdir(parents=True, exist_ok=True)
     print("Setting Brave as the default browser...", flush=True)
     try:
-        subprocess.run(["omarchy", "default", "browser", "brave"], check=True)
+        run_command(["omarchy", "default", "browser", "brave"])
         if omarchy_output("default", "browser") != "brave":
             raise RuntimeError("Brave is not the default browser after configuration.")
     except (OSError, RuntimeError, subprocess.CalledProcessError):
@@ -96,24 +208,22 @@ def report_discord():
 
 def install_zathura():
     required_packages = ["zathura", "zathura-pdf-mupdf", "xdg-utils"]
-    installed_packages = subprocess.check_output(["pacman", "-Qq"], text=True).splitlines()
+    installed_packages = command_output(["pacman", "-Qq"]).splitlines()
     missing_packages = [package for package in required_packages if package not in installed_packages]
 
     if missing_packages:
         print(f"Installing Zathura dependencies: {', '.join(missing_packages)}...", flush=True)
-        subprocess.run(["omarchy", "pkg", "add", *missing_packages], check=True)
+        run_command(["omarchy", "pkg", "add", *missing_packages])
     else:
         print("Zathura packages are already installed; skipping installation.")
 
-    version = subprocess.check_output(["zathura", "--version"], text=True, stderr=subprocess.STDOUT)
+    version = command_output(["zathura", "--version"], merge_errors=True)
     if "pdf-mupdf" not in version:
         raise RuntimeError("Zathura's pdf-mupdf plugin is not available.")
 
 def set_zathura_pdf_default():
     desktop_id = "org.pwmt.zathura.desktop"
-    current_default = subprocess.check_output(
-        ["xdg-mime", "query", "default", "application/pdf"], text=True
-    ).strip()
+    current_default = command_output(["xdg-mime", "query", "default", "application/pdf"]).strip()
 
     if current_default == desktop_id:
         print("Zathura is already the default PDF reader; skipping.")
@@ -130,10 +240,8 @@ def set_zathura_pdf_default():
 
     config_directory.mkdir(parents=True, exist_ok=True)
     try:
-        subprocess.run(["xdg-mime", "default", desktop_id, "application/pdf"], check=True)
-        current_default = subprocess.check_output(
-            ["xdg-mime", "query", "default", "application/pdf"], text=True
-        ).strip()
+        run_command(["xdg-mime", "default", desktop_id, "application/pdf"])
+        current_default = command_output(["xdg-mime", "query", "default", "application/pdf"]).strip()
         if current_default != desktop_id:
             raise RuntimeError("Zathura is not the default PDF reader after configuration.")
     except (OSError, RuntimeError, subprocess.CalledProcessError):
@@ -147,11 +255,11 @@ def set_zathura_pdf_default():
 
 def reload_hyprland(label):
     try:
-        subprocess.check_output(["hyprctl", "reload"], text=True, stderr=subprocess.STDOUT)
+        command_output(["hyprctl", "reload"], merge_errors=True)
     except subprocess.CalledProcessError as error:
         details = error.output.strip() or str(error)
         raise RuntimeError(f"{label}: Hyprland reload failed: {details}") from error
-    errors = subprocess.check_output(["hyprctl", "configerrors"], text=True).strip()
+    errors = command_output(["hyprctl", "configerrors"]).strip()
     if errors:
         raise RuntimeError(f"{label}: Hyprland configuration errors: {errors}")
     print(f"{label}: Hyprland reloaded; no configuration errors.", flush=True)
@@ -168,7 +276,7 @@ def configure_neovim_plugin(filename, specification, label):
     preserved_specs = f"  (function(...)\n{original}\n  end)(...),\n" if original.strip() else ""
     header = f"-- nvim/lua/plugins/{filename}\n\nreturn {{\n"
     updated = header + preserved_specs + specification
-    subprocess.run(["luac", "-p", "-"], input=updated, text=True, check=True)
+    run_command(["luac", "-p", "-"], input=updated)
 
     if plugin_file.exists():
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
@@ -230,7 +338,7 @@ def configure_codex_defaults():
     config_directory.mkdir(parents=True, exist_ok=True)
     try:
         config_file.write_text(tomlkit.dumps(configuration), encoding="utf-8")
-        subprocess.run(["codex", "features", "list"], stdout=subprocess.DEVNULL, check=True)
+        run_command(["codex", "features", "list"], quiet=True)
     except (OSError, subprocess.CalledProcessError):
         if backup is None:
             config_file.unlink(missing_ok=True)
@@ -246,12 +354,14 @@ def install_steam():
         return
 
     print("Installing Steam...", flush=True)
-    subprocess.run(["omarchy", "install", "gaming", "steam"], check=True)
+    run_command(["omarchy", "install", "gaming", "gpu-lib32"])
+    run_command(["omarchy", "pkg", "add", "steam"])
+    run_command(["omarchy", "lifecycle", "dispatch", "post-install", "steam"])
 
     if shutil.which("steam") is None:
         raise RuntimeError("Steam was not found after installation.")
 
-    print("Steam installed.")
+    print("Steam packages installed. Launch Steam manually to download/update the client and sign in.")
 
 def configure_bar_widget(widget_id, default_section, settings, label):
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
@@ -320,9 +430,22 @@ def configure_clock_format():
     }
     configure_bar_widget("omarchy.clock", "center", formats, "Clock format")
 
-def report_agents_widget():
-    current_version = omarchy_output("version")
-    print(f"Agents widget left unchanged on Omarchy {current_version}; existing user clones are preserved.")
+def agents_weekly_panel_source(original):
+    patch_file = Path(__file__).resolve().parent / "config/omarchy/agents-weekly.patch"
+    sections = re.split(r"^@@[^\n]*\n", patch_file.read_text(), flags=re.MULTILINE)
+    if len(sections) != 2:
+        raise RuntimeError("The Agents weekly patch must contain exactly one hunk.")
+    lines = sections[1].splitlines(keepends=True)
+    before = "".join(line[1:] for line in lines if line.startswith((" ", "-")))
+    after = "".join(line[1:] for line in lines if line.startswith((" ", "+")))
+    if original.count(before) + original.count(after) != 1:
+        raise RuntimeError("Agents widget implementation changed; review it before applying this step.")
+    return original.replace(before, after, 1)
+
+def configure_agents_widget():
+    configure_cloned_widget(
+        "omarchy.agents", "Agents weekly percentage and reset countdown", agents_weekly_panel_source,
+    )
 
 def configure_hyprland_override(filename, source_name, label):
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
@@ -337,7 +460,7 @@ def configure_hyprland_override(filename, source_name, label):
         return
 
     updated = original.rstrip() + "\n\n" + override
-    subprocess.run(["luac", "-p", "-"], input=updated, text=True, check=True)
+    run_command(["luac", "-p", "-"], input=updated)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup = config_file.with_name(f"{filename}.backup-{timestamp}")
     shutil.copy2(config_file, backup)
@@ -416,74 +539,76 @@ def workspace_button_source(original):
     return original.replace(old_code, new_code, 1)
 
 def configure_workspace_buttons():
-    plugin_id = f"{os.environ.get('USER') or getpass.getuser()}.workspaces"
+    configure_cloned_widget(
+        "omarchy.workspaces", "All ten workspace buttons", workspace_button_source,
+    )
+
+def configure_cloned_widget(source_id, label, update_source):
+    plugin_id = f"{os.environ.get('USER') or getpass.getuser()}.{source_id.removeprefix('omarchy.')}"
     config_directory = Path.home() / ".config/omarchy"
     plugin_directory = config_directory / "plugins" / plugin_id
     shell_file = config_directory / "shell.json"
-    plugin_existed = plugin_directory.exists() or plugin_directory.is_symlink()
     shell_existed = shell_file.exists()
 
+    if plugin_directory.is_symlink():
+        raise RuntimeError(f"{plugin_directory} must be a user-owned plugin directory, not a symlink.")
+    plugin_existed = plugin_directory.exists()
     if plugin_existed:
         manifest = json.loads((plugin_directory / "manifest.json").read_text())
-        if manifest.get("id") != plugin_id or manifest.get("omarchy", {}).get("clonedFrom") != "omarchy.workspaces":
-            raise RuntimeError(f"{plugin_directory} is not a clone of omarchy.workspaces.")
+        if manifest.get("id") != plugin_id or manifest.get("omarchy", {}).get("clonedFrom") != source_id:
+            raise RuntimeError(f"{plugin_directory} is not a clone of {source_id}.")
         filename = manifest["entryPoints"]["barWidget"]
         widget_file = plugin_directory / filename
         if widget_file.is_symlink() or not widget_file.resolve().is_relative_to(plugin_directory.resolve()):
-            raise RuntimeError("The workspace widget must be a regular file inside its clone.")
+            raise RuntimeError("The widget must be a regular file inside its clone.")
     else:
         catalog = json.loads(omarchy_output("plugin", "catalog"))
-        source = next((plugin for plugin in catalog if plugin["id"] == "omarchy.workspaces" and plugin["firstParty"]), None)
+        source = next((plugin for plugin in catalog if plugin["id"] == source_id and plugin["firstParty"]), None)
         if source is None:
-            raise RuntimeError("Built-in workspace widget was not found.")
+            raise RuntimeError(f"Built-in widget was not found: {source_id}")
         manifest = json.loads(Path(source["manifestPath"]).read_text())
         filename = manifest["entryPoints"]["barWidget"]
         widget_file = Path(source["barWidgetPath"])
 
     original = widget_file.read_text()
-    updated = workspace_button_source(original)
+    updated = update_source(original)
     shell_settings = json.loads(shell_file.read_text()) if shell_existed else {}
     layout = shell_settings.get("bar", {}).get("layout", {})
     active_ids = {entry["id"] for entries in layout.values() for entry in entries}
     if original == updated and plugin_id in active_ids:
-        print("All ten workspace buttons are already configured; skipping.")
+        print(f"{label} is already configured; skipping.")
         return
 
-    test_file = Path(__file__).resolve().parent / "tests/workspace-buttons.test.cjs"
-    with tempfile.TemporaryDirectory(prefix="workspace-widget-check-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="widget-check-") as temporary:
         staged_widget = Path(temporary) / Path(filename).name
         staged_widget.write_text(updated)
-        subprocess.run(
+        run_command(
             ["/usr/lib/qt6/bin/qmlformat", "--ignore-settings", str(staged_widget)],
-            stdout=subprocess.DEVNULL, check=True,
+            quiet=True,
         )
-        try:
-            subprocess.check_output(
-                ["node", str(test_file)], env=dict(os.environ, WIDGET_QML_PATH=str(staged_widget)),
-                stderr=subprocess.STDOUT, text=True,
-            )
-        except subprocess.CalledProcessError as error:
-            raise RuntimeError(f"Workspace button checks failed:\n{error.output}") from error
 
     state_directory = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    backup_directory = state_directory / "omarchy/backups" / f"workspaces-widget-{timestamp}"
+    backup_directory = state_directory / "omarchy/backups" / f"{source_id.removeprefix('omarchy.')}-widget-{timestamp}"
     backup_directory.mkdir(parents=True)
     if shell_existed:
         shutil.copy2(shell_file, backup_directory / "shell.json")
     if plugin_existed:
         shutil.copy2(widget_file, backup_directory / Path(filename).name)
-    print(f"Workspace widget backups saved to {backup_directory}", flush=True)
+    print(f"{label} backups saved to {backup_directory}", flush=True)
 
     try:
         if not plugin_existed:
-            subprocess.run(["omarchy", "plugin", "clone", "omarchy.workspaces"], check=True)
+            run_command(["omarchy", "plugin", "clone", source_id])
         widget_file = plugin_directory / filename
         widget_file.write_text(updated)
         if plugin_existed and plugin_id not in active_ids:
-            subprocess.run(["omarchy", "plugin", "enable", plugin_id], check=True)
-        subprocess.run(["omarchy", "restart", "shell"], check=True)
-    except (OSError, subprocess.CalledProcessError):
+            run_command(["omarchy", "plugin", "enable", plugin_id])
+        run_command(["omarchy", "restart", "shell"])
+        plugins = json.loads(omarchy_output("plugin", "list", "--json"))
+        if not any(plugin["id"] == plugin_id and plugin.get("enabled") for plugin in plugins):
+            raise RuntimeError(f"{plugin_id} did not become enabled after the shell restart.")
+    except (OSError, RuntimeError, subprocess.CalledProcessError, json.JSONDecodeError, KeyError, TypeError):
         if shell_existed:
             shutil.copy2(backup_directory / "shell.json", shell_file)
         else:
@@ -492,10 +617,10 @@ def configure_workspace_buttons():
             shutil.copy2(backup_directory / Path(filename).name, widget_file)
         elif plugin_directory.is_dir():
             shutil.rmtree(plugin_directory)
-        subprocess.run(["omarchy", "restart", "shell"], check=False)
+        run_command(["omarchy", "restart", "shell"], check=False)
         raise
 
-    print("All ten workspace buttons configured; native per-monitor workspace behavior is unchanged.")
+    print(f"{label} configured and enabled as {plugin_id}.")
 
 def verify_environment():
     if len(sys.argv) > 1:
@@ -519,28 +644,39 @@ def verify_environment():
         content = path.read_text()
         retired = ("hypr.steam-workspaces", "hypr.chat-workspaces", "hypr.repo-workspaces", "steam_window_geometries", "local connected_monitors")
         if any(marker in content for marker in retired) or re.search(r"\bfor\s+workspace\s*=\s*8\s*,\s*10\s+do\b", content):
-            raise RuntimeError(f"Legacy 4.0 overrides found in {path}. Review them before using native 4.5 workspaces; see docs/QUATTRO-4.0.md. No setup steps were applied.")
+            raise RuntimeError(f"Legacy 4.0 overrides found in {path}. Review them before using native 4.5 workspaces; see README.md (Displays and Ten Workspaces per Monitor). No setup steps were applied.")
 
 def main():
-    verify_environment()
-    install_ghost_pastel()
-    install_brave()
-    set_brave_default()
-    report_whatsapp()
-    report_slack()
-    report_discord()
-    install_zathura()
-    set_zathura_pdf_default()
-    configure_neo_tree()
-    configure_codex_defaults()
-    install_steam()
-    configure_dota_close_guard()
-    configure_clock_format()
-    report_agents_widget()
-    configure_compact_layout()
-    configure_displays()
-    configure_workspace_buttons()
-    report_monitor_workspaces()
+    steps = [
+        ("Environment", [verify_environment]),
+        ("Ghost Pastel Theme", [install_ghost_pastel]),
+        ("Brave", [install_brave, set_brave_default]),
+        ("WhatsApp", [report_whatsapp]),
+        ("Slack", [report_slack]),
+        ("Discord", [report_discord]),
+        ("Zathura", [install_zathura, set_zathura_pdf_default]),
+        ("Neovim", [configure_neo_tree]),
+        ("Codex CLI Approval Defaults", [configure_codex_defaults]),
+        ("Steam", [install_steam]),
+        ("Disable Super+W While Dota 2 Runs", [configure_dota_close_guard]),
+        ("Clock Format", [configure_clock_format]),
+        ("Agents Widget", [configure_agents_widget]),
+        ("Compact Window Layout and Focus Border", [configure_compact_layout]),
+        ("Displays and Ten Workspaces per Monitor", [
+            configure_displays, configure_workspace_buttons, report_monitor_workspaces,
+        ]),
+    ]
+    state_directory = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    log_directory = state_directory / "omarchy-configs/logs" / timestamp
+    log_directory.mkdir(mode=0o700, parents=True)
+    print(f"Setup logs: {log_directory}", flush=True)
+    with (log_directory / "setup.log").open("x", encoding="utf-8") as run_log:
+        for number, (label, actions) in enumerate(steps, start=1):
+            run_step(number, len(steps), label, actions, log_directory, run_log)
+        message = f"Setup finished: {len(steps)}/{len(steps)} steps. Manual checks remain in README.md. Logs: {log_directory}"
+        print(message, flush=True)
+        run_log.write(message + "\n")
 
 if __name__ == "__main__":
     try:

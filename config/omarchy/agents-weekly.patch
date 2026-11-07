@@ -1,0 +1,37 @@
+# config/omarchy/agents-weekly.patch
+
+--- Panel.qml
++++ Panel.qml
+@@ -2040,22 +2040,23 @@
+-    // Sized to the widest time left ("19h 40m"), so every meter ends in the
+-    // same place.
+     TextMetrics {
+       id: compactValueMetrics
+       font.family: root.fontFamily
+       font.pixelSize: Style.font.bodySmall
+-      text: "00h 00m"
+-    }
+-
+-    // How long until the window resets. The meter says how full it is; the
+-    // exact percentage is in the row's tooltip.
++      text: compact.window && compact.window.title === "Weekly" ? "100% · 00h 00m" : "00h 00m"
++    }
++
+     Text {
+       id: compactValue
+-      width: Math.ceil(compactValueMetrics.advanceWidth)
++      width: Math.ceil(Math.max(compactValueMetrics.advanceWidth, implicitWidth))
+       anchors.right: parent.right
+       anchors.verticalCenter: parent.verticalCenter
+       textFormat: Text.PlainText
+       horizontalAlignment: Text.AlignRight
+-      text: compact.resetMs > 0 ? root.formatDuration(compact.resetMs) : ""
++      text: {
++        var remaining = compact.resetMs > 0 ? root.formatDuration(compact.resetMs) : ""
++        if (!compact.window || compact.window.title !== "Weekly") return remaining
++        var used = Commons.I18n.formatNumber(Math.round(compact.window.percent * 100)) + "%"
++        return remaining ? used + " · " + remaining : used
++      }
+       color: root.dim
+       font.family: root.fontFamily
+       font.pixelSize: Style.font.bodySmall
