@@ -1,3 +1,5 @@
+<!-- INSTALLATION-USB.md -->
+
 # Create an Omarchy Installation USB
 
 ## 1. Download the ISO
@@ -15,7 +17,7 @@ omarchy pkg add caligula
 Connect the USB and unmount any mounted partitions through the file manager. Then run, replacing the filename with the version you downloaded:
 
 ```bash
-caligula burn ~/Downloads/omarchy-4.5.0.iso
+caligula burn ~/Downloads/omarchy-4.5.0-x86.iso
 ```
 
 Select the correct USB—**its contents will be erased**—and wait for writing and verification to finish.

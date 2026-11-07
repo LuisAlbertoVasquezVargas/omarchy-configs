@@ -1,19 +1,57 @@
+<!-- README.md -->
+
 # Omarchy Desktop Config
 
-Personal configuration for Omarchy Quattro.
+Personal configuration for **Omarchy 4.5.0 (Quattro RS)** on this AMD/NVIDIA PC.
+See the [4.5 release notes](https://omarchy.org/news/2026/11/omarchy-4-5/).
 
 ## Target System
 
 - CPU: AMD Ryzen 7 5700X
 - GPU: NVIDIA GeForce RTX 5060 Ti
-- Primary display: Samsung LS27DG30X, currently running at 1920x1080 at 60 Hz (`DP-1`)
-- Secondary display: BenQ G610HDAL, 1366x768 at 59.79 Hz (`HDMI-A-1`; currently disconnected)
+- Primary display: Samsung LS27DG30X, 1920×1080 at 60 Hz, scale 1.
+  Confirmed description: `Samsung Electric Company LS27DG30X H8CX700532`.
+- Secondary display: BenQ G610HDAL, 1366×768 at 59.79 Hz, scale 1,
+  connected through `HDMI-A-1` when in use.
+
+The Samsung description was checked on this PC. The BenQ is disconnected; its
+connector and mode come from the previous desktop setup and need a live check
+when reconnected. No laptop, touchpad, or battery configuration is installed.
 
 <!-- TODO: Describe additional hardware components. -->
 
+## Configuration Workflow
+
+This repository follows the same format as
+[omarchy-configs-laptop](https://github.com/LuisAlbertoVasquezVargas/omarchy-configs-laptop):
+a root `setup.py`, named steps in README order, a project `.venv`, and
+`requirements.txt`. Python uses TOMLKit to preserve unrelated TOML settings.
+
+Review the code before running it. `python setup.py` takes no arguments and
+**applies configuration immediately**. There is no `--apply` or preview mode.
+It checks the Omarchy version and active desktop session before performing
+setup. Omarchy 4.0 installs and detected legacy workspace rules are refused.
+This is a 4.5 setup, not an operating-system updater or a 4.0 migration tool.
+
+Each step checks the installed component or desired setting and skips a match.
+Changed files are backed up. Lua syntax and effective Hyprland configuration
+are checked; affected files are restored if those checks fail. A failed step
+stops the script, while earlier successful steps remain applied. Package
+installations and theme changes are not automatically undone.
+
+The setup covers the sections below through **Displays and Ten Workspaces per
+Monitor**. Application sign-ins, synchronization, visual checks, and the
+experimental NVIDIA update remain manual. Older workarounds are preserved in
+[Quattro 4.0 Historical Reference](docs/QUATTRO-4.0.md), not installed by setup.
+
+Implementation has been checked against the official `v4.5.0` source. It has
+not yet been applied and visually validated on this PC running 4.5.0.
+
 ## Installation USB
 
-See [Create an Omarchy Installation USB](INSTALLATION-USB.md) for the steps to prepare a bootable USB.
+See [Create an Omarchy Installation USB](INSTALLATION-USB.md).
+USB flashing, installation, updating Omarchy, and rebooting are separate from
+running this repository's setup script.
 
 ## Clone This Repository
 
@@ -23,110 +61,133 @@ git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
 cd omarchy-configs
 ```
 
+Create and activate the project environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Activate `.venv` in each terminal before running setup. Code follows the general
+and Python conventions in the sibling `swe-standards` repository.
+
 ## Ghost Pastel Theme
 
-Install and activate the Ghost Pastel community theme:
+After reviewing the code, run it as your normal desktop user from a terminal
+inside the unlocked Omarchy 4.5.0 session, without `sudo` or arguments:
+
+```bash
+python setup.py
+```
+
+If Ghost Pastel is missing, setup installs and activates it with:
 
 ```bash
 omarchy theme install https://github.com/row-huh/omarchy-ghost-pastel-theme
 ```
 
+An already installed theme is skipped, including when another theme is active.
+The script checks Omarchy's installed theme list after a new installation.
+Confirm the bar, wallpaper, and terminal colors visually.
+
 ## Brave
 
-Install Brave:
+Setup skips installation when `brave` is already available. Otherwise it uses
+Omarchy's browser installer and checks the executable afterward:
 
 ```bash
 omarchy install browser brave
 ```
 
-Then set Brave as the default browser:
+It then checks the default browser and sets Brave only when needed:
 
 ```bash
+omarchy default browser
 omarchy default browser brave
 ```
 
+Existing `mimeapps.list` is backed up before changing the default. The result
+is checked and previous MIME settings are restored if the change fails.
+
 ### Setup
 
-1. Open Brave and set it as the default browser.
-2. Go to **Settings → Appearance → Theme** and select **Dark**.
-3. Go to **Settings → Sync** and select **I have a Sync Code**.
-4. On your smartphone:
-   1. Open Brave.
-   2. Go to **Settings → Sync**.
-   3. Select **Add a new device**.
-   4. Scan the QR code displayed on your desktop.
-5. Wait for synchronization to complete, including bookmarks, passwords, history, tabs, and other data.
-6. Go to **Settings → Search engine** and set:
-   - **Normal:** Google
-   - **Private:** Google
-7. ~~Go to **Settings → System** and disable **Use graphics acceleration when available**.~~ No longer needed after the bug fix.
+1. Open Brave.
+2. Select **Dark** under **Settings → Appearance → Theme**.
+3. Under **Settings → Sync**, select **I have a Sync Code**.
+4. On your phone, open Brave's Sync settings, select **Add a new device**, and
+   scan the desktop QR code.
+5. Wait for synchronization to finish.
+6. Set Google for normal and private browsing under **Settings → Search engine**.
+
+The old instruction to disable graphics acceleration remains retired.
 
 ## Ghostty
 
-> **TODO:** Although Ghostty was used on the previous Omarchy setup, test both Ghostty and Foot on Omarchy Quattro before choosing and documenting the default terminal.
+Terminal selection is not automated. Test Ghostty and Foot on Quattro RS before
+choosing and documenting the default terminal.
 
 ## WhatsApp
 
-Nothing to install. WhatsApp comes preinstalled as an Omarchy web app.
+WhatsApp is supplied by Omarchy. Setup reports the installed Omarchy version
+without changing the app. Open it from the launcher and link your phone.
 
 ## Slack
 
-Install Slack as an Omarchy web app:
+As in the laptop workflow, setup reports that Slack can be installed as a
+service. Installation and sign-in remain manual. The web-app option is:
 
 ```bash
 omarchy webapp install "Slack" "https://app.slack.com/client" ""
 ```
 
-The empty icon argument lets Omarchy download Slack's icon automatically. Open the app launcher with `Super + Space`, search for **Slack**, and sign in to the workspace. Allow notifications when Brave prompts for permission.
-
-Because Brave is the configured default browser, Slack opens in a standalone Brave web-app window.
+The empty icon argument downloads the icon automatically. With Brave selected
+as the default browser, the web app opens in Brave. Sign in and allow
+notifications when prompted.
 
 ## Discord
 
-Nothing to install. Discord comes preinstalled as an Omarchy web app. Open the app launcher with `Super + Space`, search for **Discord**, and sign in.
-
-Because Brave is the configured default browser, Discord opens in a standalone Brave web-app window.
+Discord is supplied by Omarchy. Setup reports the installed Omarchy version
+without changing the app. Open Discord from the launcher and sign in.
 
 ## Zathura
 
+Setup installs only missing packages:
+
 ```bash
-omarchy pkg add zathura zathura-pdf-mupdf
-xdg-mime default org.pwmt.zathura.desktop application/pdf
+omarchy pkg add zathura zathura-pdf-mupdf xdg-utils
 ```
+
+It verifies that `zathura --version` lists the `pdf-mupdf` plugin, then checks
+the PDF association. A matching default is skipped. Otherwise, MIME settings
+are backed up before setting and checking the association; failures restore
+the previous settings.
+
+Equivalent checks:
+
+```bash
+zathura --version
+xdg-mime query default application/pdf
+```
+
+The association must be `org.pwmt.zathura.desktop`. Opening a sample PDF is a
+manual check; routine setup does not create or open one.
 
 ## Neovim
 
-Show hidden, filtered, and Git-ignored items in Neo-tree by default while keeping their filtered styling.
+Setup creates the Neo-tree visibility override under
+`~/.config/nvim/lua/plugins/neo-tree.lua`. Existing plugin specifications are
+retained as a nested Lazy.nvim specification, followed by the visibility
+setting. Lua syntax is checked before saving, changed files are backed up,
+and an unchanged override is skipped.
 
-Path: `~/.config/nvim/lua/plugins/neo-tree.lua`
-
-```lua
-return {
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    opts = {
-      filesystem = {
-        filtered_items = {
-          visible = true,
-        },
-      },
-    },
-  },
-}
-```
-
-Restart Neovim or reopen Neo-tree to apply the change.
+Hidden, filtered, and Git-ignored files are shown with their filtered styling.
+Restart Neovim and inspect Neo-tree to verify the result.
 
 ## Codex CLI Approval Defaults
 
-Make **Approve for me** the default for new Codex CLI sessions, matching the
-laptop setup.
-
-Path: `~/.codex/config.toml`
-
-Back up the existing file, then merge these settings at the top level, before
-any TOML table headers. Update existing keys rather than duplicating them, and
-preserve unrelated settings.
+The Codex CLI must already be installed. Setup uses TOMLKit to merge these
+top-level settings into `${CODEX_HOME:-$HOME/.codex}/config.toml`:
 
 ```toml
 approval_policy = "on-request"
@@ -134,311 +195,56 @@ approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
 ```
 
-Eligible approval requests go through automatic review while the workspace
-sandbox remains enabled. These defaults apply to new sessions; existing
-sessions can retain their previous settings. Explicit CLI or profile overrides
-and managed requirements can take precedence.
+Unrelated settings and comments are preserved. Matching defaults are skipped;
+changed files are backed up and checked with `codex features list`. Failed
+validation restores the original file.
 
-Validate that Codex loads the configuration:
-
-```bash
-codex features list
-```
-
-Start a new Codex CLI session and use `/permissions` to check that **Approve for
-me** is selected.
-
-Official references: [Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review)
+Start a new Codex session and check `/permissions`. Profiles, command-line
+options, and managed requirements can override these defaults. Sign-in remains
+manual. Official references: [Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review)
 and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
 
 ## Steam
+
+Setup skips an existing `steam` executable. Otherwise it uses Omarchy's
+installer so the correct graphics dependencies are selected:
 
 ```bash
 omarchy install gaming steam
 ```
 
-### Steam scaling and window layout (1920x1080)
+The installer starts Steam after installation. Account sign-in, games, and
+launch options remain manual. Existing Steam preferences are not rewritten.
 
-Keep both the GTK application scale and Hyprland monitor scale at `1` on the
-1920x1080 Samsung display. This gives applications the correct base display scale, but
-Steam also has its own Chromium UI scaling control that must be disabled below.
+The display configuration below sets GTK and monitor scale to 1 on this PC.
+If Steam still appears oversized, review **Steam → Settings → Interface →
+Scale text and icons to match monitor settings**, then restart Steam after
+changing the setting. Verify the current client's behavior on 4.5.0.
 
-Path: `~/.config/hypr/monitors.lua`
+The old fixed Steam/Friends geometry, delayed repositioning, forced NVIDIA
+ICD launch option, and conditional Steam/Dota workspace routing are retained
+only in the historical reference. They have not been validated for Quattro RS.
 
-```lua
-local omarchy_gdk_scale = 1
-local omarchy_monitor_scale = 1
+## Disable Super+W While Dota 2 Runs
 
-hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
-```
+Setup installs [scripts/dota-close-guard.sh](scripts/dota-close-guard.sh) under
+`~/.config/hypr/` and applies the reviewed
+[keybinding override](config/hypr/dota-close-binding.lua). Matching files are
+skipped; changed files are backed up and Lua is validated before saving.
 
-Place the main client (1280x900) and Friends panel (520x900) side by side on the
-primary Samsung display, with 40-pixel outer margins and a 40-pixel gap. These
-sizes replace the smaller 920x560 and 386x560 layout used on the BenQ. This layout
-is intended for the Samsung at 1920x1080 and scale 1.
+Super+W normally closes the focused window. This override consumes the shortcut
+while your native `dota2` process is running, on every workspace. After Dota
+exits, closing works normally. Steam alone does not block closing, and a process
+lookup error prevents closing. Failed binding validation restores both the
+binding file and any helper changed by that attempt.
 
-Steam runs through XWayland and applies its own geometry late in startup. Static
-window rules place both windows correctly at first, but the main window can
-expand again after the client finishes loading. Keep the static rules for the
-initial placement, then re-apply the geometry at several startup checkpoints.
-
-Path: `~/.config/hypr/hyprland.lua`
-
-```lua
--- Keep Steam's floating windows comfortable on the 1920x1080 Samsung display.
--- Steam applies its own X11 geometry late in startup, so set the initial rules
--- and then re-apply them at a few checkpoints while the client finishes loading.
-o.window({ class = "^steam$", title = "^Steam$", xwayland = true }, {
-  move = { 40, 103 },
-  size = { 1280, 900 },
-})
-o.window({ class = "^steam$", title = "^Friends List$", xwayland = true }, {
-  move = { 1360, 103 },
-  size = { 520, 900 },
-})
-
-local steam_window_geometries = {
-  ["Steam"] = { x = 40, y = 103, width = 1280, height = 900 },
-  ["Friends List"] = { x = 1360, y = 103, width = 520, height = 900 },
-}
-local steam_geometry_delays = { 1000, 5000, 15000, 30000 }
-
-local function enforce_steam_geometry(address, initial_title, geometry)
-  local window = hl.get_window("address:" .. address)
-
-  if not window or window.class ~= "steam" or window.initial_title ~= initial_title then
-    return
-  end
-
-  hl.dispatch(hl.dsp.window.resize({
-    x = geometry.width,
-    y = geometry.height,
-    relative = false,
-    window = window,
-  }))
-  hl.dispatch(hl.dsp.window.move({
-    x = geometry.x,
-    y = geometry.y,
-    relative = false,
-    window = window,
-  }))
-end
-
-hl.on("window.open", function(window)
-  local initial_title = window.initial_title or window.title
-  local geometry = steam_window_geometries[initial_title]
-
-  if window.class ~= "steam" or not window.xwayland or not geometry then
-    return
-  end
-
-  local address = window.address
-
-  for _, delay_ms in ipairs(steam_geometry_delays) do
-    hl.timer(function()
-      enforce_steam_geometry(address, initial_title, geometry)
-    end, { timeout = delay_ms, type = "oneshot" })
-  end
-end)
-```
-
-The delayed callbacks use Hyprland's `window.open` event and one-shot timers.
-Each callback resolves the original window address again before changing it,
-so closing Steam during startup safely turns the remaining callbacks into
-no-ops.
-
-Reload and validate Hyprland:
-
-```bash
-hyprctl reload
-hyprctl configerrors
-```
-
-If the desktop session was started before changing `GDK_SCALE`, save any open
-work and relaunch the Omarchy session (or log out and back in) so newly launched
-applications inherit `GDK_SCALE=1`.
-
-Steam can still double the contents inside its correctly sized XWayland windows.
-Disable Steam's separate automatic DPI scaling:
-
-1. Open **Steam → Settings → Interface**.
-2. Turn off **Scale text and icons to match monitor settings (requires restart)**.
-3. Accept Steam's restart prompt.
-
-On the tested August 2026 client, `STEAM_FORCE_DESKTOPUI_SCALING=1` and
-`-forcedesktopscaling 1.0` were ignored. Turning off the Interface option changed
-Steam's Chromium display from `683x384, scale=2` to `1366x768, scale=1`.
-
-Verify Steam's internal UI scale from its Chromium log:
-
-```bash
-rg 'Display\[[0-9]+\].*scale=' \
-  ~/.local/share/Steam/logs/webhelper_gpu.txt | tail -n 1
-```
-
-On the Samsung, the latest line should report `bounds=[0,0 1920x1080]` and `scale=1`.
-
-Verify that both windows use the expected geometry:
-
-```bash
-hyprctl clients -j | jq \
-  '[.[] | select(.class == "steam" and
-    (.title == "Steam" or .title == "Friends List")) |
-    {at, size, title}]'
-```
-
-Wait at least 30 seconds after launching Steam, then verify that the main window
-reports `1280x900` at `[40, 103]` and Friends List reports `520x900` at
-`[1360, 103]`.
-
-Dota 2 launch options:
-
-```bash
-SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/nvidia_icd.json %command% -console -novid
-```
-
-### Conditional Steam and Dota 2 workspaces
-
-Install the event handler from this repository:
-
-```bash
-install -m 644 scripts/steam-workspaces.lua ~/.config/hypr/steam-workspaces.lua
-```
-
-Add this after the Steam geometry rules in `~/.config/hypr/hyprland.lua`:
-
-```lua
-require("hypr.steam-workspaces")
-```
-
-The Steam bootstrap update/install window always opens silently on workspace 1,
-including when workspaces 1 or 2 are occupied or Steam is already running.
-Static rules place it there before its first frame; event handlers also catch
-late class/title updates.
-
-For the main Steam and Dota windows, the handler checks that workspaces
-1 and 2 have no other mapped windows. If both are empty, Steam client windows
-(including Friends, chat and dialogs) go to workspace 1 without switching focus,
-and Dota 2 goes to workspace 2 and follows focus. The opening window itself does
-not count as an occupant. Other Steam games are unaffected.
-
-The decision lasts while any Steam or Dota window remains open. If either
-workspace was occupied at startup, main-client and game placement stays unchanged
-for that session. The updater still goes to workspace 1.
-Routing also stops if an unrelated window occupies either workspace when a new
-Steam or Dota window opens. Close all Steam and Dota windows to allow a fresh
-check. Reloading the config does not adopt an already-running session or move
-existing windows; close and reopen Steam with both workspaces empty to activate.
-
-Matching uses the client classes `steam`, `steamwebhelper`, and `SteamUpdater`
-(the bootstrap update/install window), and Dota classes
-`steam_app_570`, `dota2`, and `dota 2` (case-insensitive). Check `hyprctl clients -j`
-if a different game backend reports another class.
-For an XWayland bootstrap window with no class yet or a generic Steam class,
-titles `Updating Steam` and `Installing Steam` (with optional trailing dots,
-an ellipsis, or surrounding whitespace) also match, including the initial title.
-The October 2026 `xwin` updater reports an empty class and the title `Steam`.
-That exact XWayland combination also opens silently on workspace 1, with initial
-focus disabled. This was verified using Steam's actual updater UI child.
-Checks at 100, 500, 1500, and 3000 milliseconds after opening resolve the window
-again to catch delayed mapping and metadata. Closed windows are ignored.
-The handler listens for late class/title updates, including a generic Steam
-window identifying itself as the updater. After updater placement, further
-metadata changes do not undo manual moves.
-
-Validate the handler and reload the desktop configuration:
-
-```bash
-lua tests/test_steam_workspaces.lua
-hyprctl reload
-hyprctl configerrors
-```
-
-### Disable Super+W while Dota 2 is running
-
-Install the close-window guard:
-
-```bash
-install -m 755 scripts/dota-close-guard.sh ~/.config/hypr/dota-close-guard.sh
-```
-
-Add to `~/.config/hypr/bindings.lua`:
-
-```lua
--- Override Omarchy's default Close window binding.
-hl.unbind("SUPER + W")
-o.bind("SUPER + W", "Close window (disabled while Dota 2 runs)",
-  '"' .. os.getenv("HOME") .. '/.config/hypr/dota-close-guard.sh"')
-```
-
-The guard checks for your native `dota2` process on every press. While Dota 2
-is running, Super+W does nothing on every workspace, including when another
-application has focus. When the game exits, Super+W closes the focused window
-normally. Steam alone and other games do not block it. A process lookup error
-also prevents closing. The shortcut stays consumed while blocked.
-
-```bash
-hyprctl reload
-hyprctl configerrors
-```
-
-## Chat App Workspaces
-
-Route newly opened Brave web-app windows to these workspaces:
-
-| App | Workspace | Shortcut |
-| --- | --- | --- |
-| WhatsApp | 10 | `Super + 0` |
-| Slack | 9 | `Super + 9` |
-| Discord | 8 | `Super + 8` |
-
-Workspace 10 is the tenth numeric workspace, selected with the `0` key.
-An app moves only when its destination has no other mapped windows, including
-other windows of the same app. The opening window itself does not count.
-Each destination is checked independently. Placement is silent; occupied
-workspaces leave the new window where it opened. Later metadata changes do not
-retry a blocked placement or undo a manual move. Ordinary browser tabs are
-unaffected. These rules match the Brave web apps installed above.
-
-From this repository:
-
-```bash
-install -m 644 scripts/chat-workspaces.lua ~/.config/hypr/chat-workspaces.lua
-```
-
-Add to `~/.config/hypr/hyprland.lua`:
-
-```lua
-require("hypr.chat-workspaces")
-```
-
-Reloading leaves existing windows in place. Close and reopen an app to apply.
-
-```bash
-lua tests/test_chat_workspaces.lua
-hyprctl reload
-hyprctl configerrors
-```
-
-To verify, open an app with its destination empty and check that it moves there
-without switching focus. Then place another window on that destination and open
-a new app window: it should stay on the workspace where it opened. Moving an app
-manually must not cause it to return to its assigned workspace.
-
-Inspect actual window placement and classes with:
-
-```bash
-hyprctl -j clients | jq \
-  '[.[] | select(.class | test("^brave-(web\\.whatsapp\\.com|app\\.slack\\.com|discord\\.com)__")) |
-    {class, title, workspace: .workspace.id}]'
-```
+Test Super+W before starting Dota, while Dota runs, and after exiting it.
+The close dispatcher matches Omarchy 4.5's default binding; that source check
+and the guard tests do not replace this live check.
 
 ## Clock Format
 
-Migrates the previous Waybar clock format to Omarchy Shell.
-
-Path: `~/.config/omarchy/shell.json`
+Setup merges these settings into the existing built-in clock entry:
 
 ```json
 {
@@ -449,279 +255,110 @@ Path: `~/.config/omarchy/shell.json`
 }
 ```
 
-## Agents Widget: Codex Limits Unavailable
+The existing bar position, other widget options, and unrelated shell settings
+are preserved. A missing layout inherits Omarchy's installed layout; a missing
+clock is added in the center. Duplicate clocks are reported for resolution.
+Matching settings are skipped. Changed JSON is backed up and written atomically.
 
-Confirmed on September 30, 2026 with Omarchy `4.0.4-1` and Codex CLI
-`0.159.3`. The panel showed **Codex limits unavailable** and `account/read`,
-while local token totals still appeared. No earlier fix for this issue was
-found in this repository's history or in the installed user plugins.
+The shell reloads automatically. Check the date, week number, and time visually.
 
-The installed Codex collector combines `select()` on a pipe with Python's
-buffered `readline()`. When a notification and an RPC response arrive together,
-`readline()` can buffer the response while `select()` sees an empty pipe. The
-collector then times out even though Codex already replied. A partial line can
-also block `readline()` beyond the intended timeout.
+## Agents Widget
 
-[scripts/codex-usage-collector.py](scripts/codex-usage-collector.py) reuses the
-installed collector's scanning, cache, and output format, replacing only its RPC
-reader with raw pipe reads, explicit line buffering, and a monotonic deadline.
-It also reports RPC errors and unexpected server exits. Codex's
-[official app-server documentation](https://learn.chatgpt.com/docs/app-server#authentication-endpoints)
-documents the account and rate-limit RPCs used by the collector.
+Setup reports the installed Omarchy version and leaves Agents unchanged,
+including existing user-owned clones and provider settings. It does not install
+the old quota collector or the laptop's experimental weekly display change.
 
-### Install or reapply
-
-From this repository, inside the running Omarchy desktop session:
-
-```bash
-python3 scripts/install-agents-usage-fix.py
-```
-
-The installer backs up `shell.json` and any existing user clone under
-`~/.local/state/omarchy/backups/agents-usage-<timestamp>/`, then uses
-`omarchy plugin clone omarchy.agents` on the first install. The bar switches to
-`<username>.agents`. Its `Main.qml` calls a private copy of the installed updater,
-which routes only Codex through the patched reader. Other providers retain their
-packaged collectors. Files under `/usr/share/omarchy/` stay untouched. The
-installer restarts Omarchy Shell (the bar briefly disappears) because a plugin
-rescan alone retained the old imported `Main.qml` during testing.
-
-The user clone survives package updates. Its QML and private updater are copies,
-so review them after Omarchy updates; rerunning the installer refreshes the
-private updater but preserves the clone's QML customizations. The Python wrapper
-loads the installed Codex collector each run and depends on its internal
-`rpc_request`, `fetch_codex_rpc`, and `main` functions remaining compatible.
-The stock `omarchy agent usage-update` command still uses the stock reader;
-use the clone's updater below when manually refreshing this fix.
-
-### Verify
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
-"$HOME/.config/omarchy/plugins/$USER.agents/usage-update" --force codex
-jq '{updatedAt, tierLabel, limits, usageStatusText}' \
-  "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/agents/usage/codex.json"
-```
-
-Reopen the Agents panel. `usageStatusText` should be empty, and `limits` should
-contain the quota windows returned by your account. The live test returned a
-weekly limit at 45% used and a reset timestamp; the original reader returned
-`account/read`. After restarting the shell, a refresh through the running widget
-also succeeded, reporting 46% used with no error. The tests cover a notification and response in one pipe write,
-a fragmented response, a partial-line timeout, an RPC error, and EOF.
-
-To check the running widget's own refresh, run
-`omarchy-shell omarchy.agents refresh`, wait a few seconds, and inspect the same
-JSON file. If a manual run works but the widget restores `account/read`, run
-`omarchy restart shell` to clear cached QML, then repeat this check.
-
-The daily/model token totals come from local sessions and are separate from
-account-wide quota percentages. A missing second quota window is valid if the
-server returns only one. This fix does not change the default 900-second full
-refresh interval; opening the panel requests fresh limits.
-
-### Roll back
-
-```bash
-omarchy plugin enable omarchy.agents
-omarchy agent usage-update codex
-```
-
-This switches back to the packaged widget and collector. The inactive user clone
-and timestamped backup remain available. Once the packaged reader is fixed,
-switch back this way to receive future widget changes normally.
+Use Omarchy 4.5's collector first. If the old limits-unavailable issue reappears,
+reproduce it on that version before reviewing the historical workaround.
+Account setup stays manual.
 
 ## Compact Window Layout and Focus Border
 
-Path: `~/.config/hypr/looknfeel.lua`
+Setup appends the reviewed [compact layout](config/hypr/compact-layout.lua) to
+`~/.config/hypr/looknfeel.lua`. It preserves unrelated settings, skips a matching
+override, validates Lua, backs up changes, and reloads Hyprland. Failed
+validation restores the file and reloads its previous configuration.
 
-```lua
-local function load_current_theme_colors()
-  local colors = {}
-  local home = os.getenv("HOME")
+The settings use zero inner/outer gaps and a three-pixel border. Focused and
+grouped borders use the current theme's `color6`, falling back to `accent`;
+inactive borders use `background`. Missing palette values leave existing
+border colors intact. Colors are read again when Hyprland reloads.
 
-  if not home then
-    return colors
-  end
+Verify the spacing and colors visually, including after a theme change.
 
-  local file = io.open(home .. "/.local/state/omarchy/current/theme/colors.toml", "r")
+## Displays and Ten Workspaces per Monitor
 
-  if not file then
-    return colors
-  end
+Setup appends [this PC's display profiles](config/hypr/displays.lua) to
+`~/.config/hypr/monitors.lua`, preserving unrelated settings:
 
-  for line in file:lines() do
-    local name, value = line:match('^%s*([%w_]+)%s*=%s*"([^"]+)"')
+- Samsung LS27DG30X: confirmed description, 1920×1080 at 60 Hz, scale 1, `0x0`.
+- BenQ G610HDAL: `HDMI-A-1`, 1366×768 at 59.79 Hz, scale 1, `auto-right`.
+- GTK `GDK_SCALE=1`. Log out and back in for new application processes to
+  inherit the setting.
 
-    if name then
-      colors[name] = value
-    end
-  end
+Lua syntax, backups, repeat-run skips, and rollback follow the compact-layout
+step. The BenQ's description and placement still need a live check after it is
+reconnected; the fallback monitor rule remains in place for other displays.
 
-  file:close()
-  return colors
-end
+Workspace placement uses **Omarchy 4.5's native ten slots per monitor**.
+Each monitor's bar labels its slots locally; Hyprland uses global blocks of ten
+IDs underneath. Super+1 through Super+0 select slots on the focused monitor,
+with Omarchy's default move shortcuts and monitor hotplug behavior retained.
+The old shared ten-workspace placement and Steam/chat routing are not installed.
 
-local function to_hypr_color(value)
-  if not value then
-    return nil
-  end
+To show all ten slots, including empty ones, setup clones `omarchy.workspaces`
+into `~/.config/omarchy/plugins/<username>.workspaces/` and updates its button
+list. The tenth label is `0`; active layout glyphs and guest workspaces are
+preserved. This changes bar buttons, not the native workspace manager.
 
-  local hex = value:match("^#(%x+)$")
+The staged widget is checked with QML formatting and Node.js regression tests
+before installation. Backups live under
+`${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/backups/workspaces-widget-<timestamp>/`,
+outside the watched plugin tree. An active, matching clone is skipped. The
+shell is restarted after a change; failure restores the previous files and
+removes a clone created by the failed attempt. Unexpected upstream widget
+implementations stop the step for review.
 
-  if hex and #hex == 6 then
-    return "rgb(" .. hex .. ")"
-  elseif hex and #hex == 8 then
-    return "rgba(" .. hex .. ")"
-  end
-
-  return value
-end
-
-local theme_colors = load_current_theme_colors()
-local active_border_color = to_hypr_color(theme_colors.color6 or theme_colors.accent)
-local inactive_border_color = to_hypr_color(theme_colors.background)
-local general = {
-  gaps_in = 0,
-  gaps_out = 0,
-  border_size = 3,
-}
-local config = { general = general }
-
-if active_border_color and inactive_border_color then
-  general.col = {
-    active_border = active_border_color,
-    inactive_border = inactive_border_color,
-  }
-
-  config.group = {
-    col = {
-      border_active = active_border_color,
-      border_inactive = inactive_border_color,
-    },
-  }
-end
-
-hl.config(config)
-```
-
-This keeps the zero-gap layout while adding a 3-pixel border that makes the
-focused window easy to identify. The focused border uses the current Omarchy
-theme's `color6`, falling back to `accent`, while inactive borders use the
-theme's `background`. The same colors are applied to grouped windows.
-
-Colors are read from `~/.local/state/omarchy/current/theme/colors.toml` whenever
-Hyprland reloads, so changing themes also changes the borders without a
-theme-specific override. If the required colors are unavailable, the compact
-layout and border width still apply while Omarchy's generated border colors are
-left unchanged.
-
-Reload and validate the configuration:
+The native plugin CLI uses `~/.config`; setup checks that location before
+performing changes. Run these checks after applying setup:
 
 ```bash
-hyprctl reload
+hyprctl monitors all
 hyprctl configerrors
+hyprctl -j workspaces | jq 'sort_by(.id) | map({id, monitor, windows})'
 ```
 
-`hyprctl configerrors` should return no output.
-
-## Ten Workspaces
-
-Keep workspaces 1-10 persistent with Omarchy's default numeric shortcuts enabled.
-This follows the laptop setup: when both desktop monitors are connected, workspace
-7 belongs to the secondary BenQ (`HDMI-A-1`), and workspaces 1-6 and 8-10 belong to
-the primary Samsung (`DP-1`). When only one monitor is connected, it receives all
-ten workspaces.
-
-### Create the persistent workspaces
-
-Path: `~/.config/hypr/hyprland.lua`
-
-```lua
-local connected_monitors = {}
-local fallback_monitor
-
-for _, monitor in ipairs(hl.get_monitors()) do
-  connected_monitors[monitor.name] = true
-  fallback_monitor = fallback_monitor or monitor.name
-end
-
-local primary_monitor = connected_monitors["DP-1"] and "DP-1" or fallback_monitor
-local secondary_monitor = connected_monitors["HDMI-A-1"] and "HDMI-A-1" or nil
-
-if secondary_monitor == primary_monitor then
-  secondary_monitor = nil
-end
-
-for workspace = 1, 10 do
-  local rule = {
-    workspace = tostring(workspace),
-    persistent = true,
-  }
-
-  if secondary_monitor and workspace == 7 then
-    rule.monitor = secondary_monitor
-    rule.default = true
-  elseif primary_monitor then
-    rule.monitor = primary_monitor
-    if workspace == 1 then
-      rule.default = true
-    end
-  end
-
-  hl.workspace_rule(rule)
-end
-```
-
-Replace the previous seven-workspace block with this one. In
-`~/.config/hypr/bindings.lua`, remove the old loop that calls `hl.unbind` for
-workspaces 8-10 so Omarchy's default shortcuts remain enabled:
-
-- `Super + 1` through `Super + 9`, and `Super + 0`: switch to workspaces 1-10.
-- Add `Shift`: move the focused window to that workspace and follow it.
-- Add `Shift + Alt`: move the focused window without following it.
-
-### Reload and validate Hyprland
-
-Run these after applying the configuration or connecting/disconnecting a monitor
-so the monitor assignments are reevaluated:
-
-```bash
-hyprctl reload
-hyprctl configerrors
-```
-
-`hyprctl configerrors` should return no output.
-
-### Verify the result
-
-```bash
-hyprctl -j workspaces | jq \
-  'sort_by(.id) | map({id, monitor, windows, ispersistent})'
-```
-
-The workspace IDs should be exactly 1-10, all persistent. With both displays
-connected, only workspace 7 should be on `HDMI-A-1`; the rest should be on `DP-1`.
-With only the Samsung connected, all ten should be on `DP-1`.
-
-Check that switching, moving, and silently moving shortcuts are present for all
-ten workspaces:
-
-```bash
-hyprctl -j binds | jq \
-  '[.[] | select((.description // "") |
-    test("^(Switch to|Move window to|Move window silently to) workspace ([1-9]|10)$")) |
-    .description]'
-```
-
-The result should contain 30 bindings: three actions for each workspace.
+Verify resolutions, non-overlapping positions, shortcuts on each monitor,
+all ten buttons, and unplug/reconnect behavior. Hardware and visual checks
+remain outstanding until this PC is running 4.5.0.
 
 ## Experimental: NVIDIA GPU Driver Update
 
-Update Omarchy, the kernel, and NVIDIA packages together:
+This is a separate optional operation, not performed by `setup.py`:
 
 ```bash
 omarchy update
 omarchy system reboot
 nvidia-smi
 ```
+
+Run it only when specifically updating the system. Revalidate older game
+workarounds after the update instead of reinstalling the old configuration tree.
+
+## Apply Configs with an Agent
+
+Follow the root [AGENTS.md](AGENTS.md). Implement the requested setup steps,
+review them, and apply to the live desktop only when asked. Preserve unrelated
+settings, validate each changed component, and report remaining manual checks.
+Old source and instructions remain in Git history and the historical reference.
+
+## Validate the Repository
+
+```bash
+source .venv/bin/activate
+python -m unittest discover -s tests -v
+```
+
+Tests use temporary directories and mock installation and desktop commands.
+The workspace-button regressions also run with Node.js. They do not install
+packages, restart the real shell, update Omarchy, or reboot the PC.

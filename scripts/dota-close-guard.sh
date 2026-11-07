@@ -1,5 +1,6 @@
-#!/bin/sh
-# Super+W must not close any window while this user's native Dota 2 is running.
+#!/usr/bin/env bash
+# scripts/dota-close-guard.sh
+
 pgrep -u "$(id -u)" -x dota2 >/dev/null
 status=$?
 case "$status" in
