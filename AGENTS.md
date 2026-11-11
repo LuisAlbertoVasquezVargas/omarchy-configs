@@ -18,10 +18,15 @@ changed destinations, validate syntax before writing, and restore the affected
 files when validation fails. Report failed checks. Do not claim live 4.0.6
 validation based on mocks, source inspection, or another installed version.
 Check compatibility against the official `v4.0.6` source, not current defaults.
-Do not run system updates, package database refreshes, or upgrade/migration
-helpers. Missing application packages may be installed with the 4.0.6 native
-helpers, which use `--needed` without a full upgrade. Setup configures an
-existing 4.0.6 desktop; it does not downgrade a 4.5 installation.
+Do not run system updates or upgrade/migration helpers. The user authorizes
+setup to initialize missing or empty repository indexes with a metadata-only
+Pacman refresh, backing up existing indexes and restoring them if recovery
+fails. Skip refresh when indexes are already usable. Missing applications and
+required dependencies may be installed automatically; use the scoped Pacman
+transaction guard to block desktop, kernel, and GPU package changes. Do not
+fall back to an unguarded AUR install. Preserve native Brave configuration and
+4.0.6's graphics dependency selection. Setup configures an existing 4.0.6
+desktop; it does not downgrade a 4.5 installation.
 
 Use Omarchy 4.0.6's native global workspaces 1-10 and preserve its shortcuts,
 numbering, monitor movement, and workspace layout modes. A user-owned widget

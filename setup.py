@@ -3,6 +3,7 @@
 import codecs
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
+from fnmatch import fnmatchcase
 import getpass
 import json
 import os
@@ -149,17 +150,66 @@ def verify_package_databases():
         if not database.is_file() or database.stat().st_size == 0:
             missing.append(str(database))
     if missing:
-        raise RuntimeError(
-            "Pacman repository databases are missing or empty: " + ", ".join(missing)
-            + ". Package installation cannot find targets without these indexes. "
-            "No databases were refreshed or setup settings changed. "
-            "Initialize repository metadata separately and review application dependency changes "
-            "before installing packages; keep the Omarchy/desktop packages at 4.0.6. "
-            "See README.md (Package Repository Databases)."
-        )
+        print("Initializing missing or empty repository indexes: " + ", ".join(missing), flush=True)
+        paths = [database_directory / f"{repository}{suffix}" for repository in repositories for suffix in (".db", ".db.sig")]
+        existing = [path for path in paths if path.exists() or path.is_symlink()]
+        if any(path.is_symlink() or not path.is_file() for path in existing):
+            raise RuntimeError("Repository index recovery requires regular database files; review the custom database layout.")
+        state_directory = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        backup_directory = state_directory / "omarchy-configs/backups" / f"package-databases-{timestamp}"
+        backup_directory.mkdir(parents=True)
+        if existing:
+            run_command(["sudo", "cp", "-a", "--", *map(str, existing), str(backup_directory)])
+        print(f"Repository index backup: {backup_directory}", flush=True)
+        try:
+            run_command(["sudo", "pacman", "--sync", "--refresh", "--noconfirm"])
+            for repository in repositories:
+                database = database_directory / f"{repository}.db"
+                if not database.is_file() or database.stat().st_size == 0:
+                    raise RuntimeError(f"Repository index is still missing or empty after synchronization: {database}")
+            run_command(["pacman", "--sync", "--list", "--quiet"], quiet=True)
+        except (OSError, RuntimeError, subprocess.CalledProcessError):
+            for path in existing:
+                run_command(["sudo", "cp", "-a", "--remove-destination", "--", str(backup_directory / path.name), str(path)])
+            created = [str(path) for path in paths if path not in existing]
+            if created:
+                run_command(["sudo", "rm", "-f", "--", *created])
+            raise
+        print("Repository indexes initialized; no installed packages were upgraded.")
+    else:
+        run_command(["pacman", "--sync", "--list", "--quiet"], quiet=True)
+        print("Pacman repository indexes are already present and readable; skipping refresh.")
 
-    run_command(["pacman", "--sync", "--list", "--quiet"], quiet=True)
-    print("Pacman repository databases are present and readable; no refresh performed.")
+def install_packages(packages):
+    installed = dict(line.split(maxsplit=1) for line in command_output(["pacman", "-Q"]).splitlines())
+    missing = [package for package in packages if package not in installed]
+    if not missing:
+        print("Requested packages are already installed; skipping.")
+        return
+
+    hook_file = Path(__file__).resolve().parent / "config/pacman/preserve-desktop.hook"
+    patterns = [line.split("=", 1)[1].strip() for line in hook_file.read_text().splitlines() if line.startswith("Target = ")]
+    plan = command_output(["pacman", "-S", "--needed", "--noconfirm", "--print-format", "%n %v", "--", *missing])
+    for line in plan.splitlines():
+        fields = line.split()
+        if len(fields) != 2:
+            raise RuntimeError(f"Unexpected Pacman transaction output: {line}")
+        package, version = fields
+        if package in installed and any(fnmatchcase(package, pattern) for pattern in patterns):
+            raise RuntimeError(f"Installation would change protected desktop package {package}: {installed[package]} -> {version}. No packages installed.")
+
+    hook_directories = command_output(["pacman-conf", "HookDir"]).splitlines()
+    with tempfile.TemporaryDirectory(prefix="omarchy-configs-package-hooks-") as temporary:
+        shutil.copy2(hook_file, Path(temporary) / "00-omarchy-configs-preserve-desktop.hook")
+        command = ["sudo", "pacman", "-S", "--needed", "--noconfirm"]
+        for directory in [*hook_directories, temporary]:
+            command.extend(["--hookdir", directory])
+        run_command([*command, "--", *missing])
+
+    present = command_output(["pacman", "-Qq"]).splitlines()
+    if any(package not in present for package in missing):
+        raise RuntimeError("A requested package was not found after installation.")
 
 def install_ghost_pastel():
     installed_themes = omarchy_output("theme", "list").splitlines()
@@ -182,6 +232,7 @@ def install_brave():
         return
 
     print("Installing Brave...", flush=True)
+    install_packages(["brave-bin"])
     run_command(["omarchy", "install", "browser", "brave"])
 
     if shutil.which("brave") is None:
@@ -237,7 +288,7 @@ def install_zathura():
 
     if missing_packages:
         print(f"Installing Zathura dependencies: {', '.join(missing_packages)}...", flush=True)
-        run_command(["omarchy", "pkg", "add", *missing_packages])
+        install_packages(missing_packages)
     else:
         print("Zathura packages are already installed; skipping installation.")
 
@@ -378,8 +429,14 @@ def install_steam():
         return
 
     print("Installing Steam...", flush=True)
-    run_command(["omarchy", "install", "gaming", "gpu-lib32"])
-    run_command(["omarchy", "pkg", "add", "steam"])
+    hardware = command_output(["lspci"])
+    graphics_packages = [package for vendor, package in (("Intel", "lib32-vulkan-intel"), ("AMD", "lib32-vulkan-radeon"))
+                         if re.search(rf"(VGA|Display).*{vendor}", hardware, re.IGNORECASE)]
+    if run_command(["omarchy", "hw", "nvidia", "gsp"], check=False).returncode == 0:
+        graphics_packages.append("lib32-nvidia-utils")
+    elif run_command(["omarchy", "hw", "nvidia", "without-gsp"], check=False).returncode == 0:
+        graphics_packages.append("lib32-nvidia-580xx-utils")
+    install_packages([*graphics_packages, "steam"])
 
     if shutil.which("steam") is None:
         raise RuntimeError("Steam was not found after installation.")
@@ -660,7 +717,7 @@ def verify_environment():
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
     if config_directory.resolve() != (Path.home() / ".config").resolve():
         raise RuntimeError("Omarchy 4.0.6's plugin CLI writes to ~/.config; this desktop setup requires that configuration location.")
-    for executable in ("hyprctl", "luac", "bash", "pacman", "pacman-conf", "/usr/lib/qt6/bin/qmlformat"):
+    for executable in ("hyprctl", "luac", "bash", "sudo", "pacman", "pacman-conf", "lspci", "/usr/lib/qt6/bin/qmlformat"):
         if shutil.which(executable) is None:
             raise RuntimeError(f"Required validation tool is missing: {executable}. No setup steps were applied.")
     errors = command_output(["hyprctl", "configerrors"]).strip()

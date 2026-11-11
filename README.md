@@ -9,9 +9,10 @@ See the [official 4.0.6 release](https://github.com/omacom/omarchy/releases/tag/
 Install or restore Omarchy 4.0.6 separately before running setup. This branch
 configures an existing desktop; it does not downgrade Omarchy or Arch packages.
 **System-update steps are excluded**, including the experimental NVIDIA update.
-Setup does not refresh package databases, run a full package upgrade, switch
-Omarchy versions, or apply release migrations. It still installs missing
-application packages and their dependencies through the native 4.0.6 helpers.
+Setup initializes missing repository indexes and installs missing applications
+and their required dependencies automatically. It does not run a full package
+upgrade, switch Omarchy versions, or apply release migrations. Package
+transactions are guarded to preserve the installed desktop, kernel, and GPU stack.
 
 ## Target System
 
@@ -39,9 +40,9 @@ Review the code before running it. `python setup.py` takes no arguments and
 **applies configuration immediately**. There is no `--apply` or preview mode.
 It checks the Omarchy version and active desktop session before performing
 setup. Only Omarchy 4.0.6 (including package releases such as `4.0.6-1`) is
-accepted. Other versions, missing validation tools or repository databases,
-existing Hyprland errors, and detected retired workspace/app-routing overrides
-stop setup before its configuration steps. The script does not convert a saved
+accepted. Other versions, missing validation tools, failed repository-index
+initialization, existing Hyprland errors, and detected retired workspace/app-routing
+overrides stop setup before its configuration steps. The script does not convert a saved
 4.5 `.config` tree; use the 4.0.6 defaults and preserve/review personal overrides
 individually.
 
@@ -93,9 +94,12 @@ Future preferences are listed under
 
 Compatibility has been reviewed against the official `v4.0.6` source: native
 CLI routes, Lua defaults, shell configuration, and both widget implementations.
-The emergency setup has not been applied to a live 4.0.6 desktop. Source and
-syntax checks do not establish runtime or hardware compatibility. Previous
-4.5 visual checks do not validate this branch; repeat the manual checks below.
+The user reported that the manual index recovery and application installation
+worked on a fresh 4.0.6 system. The new automatic recovery and guarded install
+path have been checked with isolated Pacman databases and a local repository;
+live 4.0.6 validation of that path remains pending. Source and syntax checks do
+not establish runtime or hardware compatibility. Previous 4.5 visual checks do
+not validate this branch; repeat the manual checks below.
 
 ## Installation USB
 
@@ -125,76 +129,55 @@ python -m pip install -r requirements.txt
 Activate `.venv` in each terminal before running setup. Code follows the general
 and Python conventions in the sibling `swe-standards` repository.
 
-### Package Repository Databases
+### Package Repository Databases and Automatic Installation
 
-Package installation requires local indexes for every enabled Pacman repository.
-The Environment step reads the repository list and database location through
-`pacman-conf`, checks for missing or empty `sync/<repository>.db` files, and
-queries the existing indexes with `pacman --sync --list --quiet`. These are
-read-only checks; no database download or system update is performed. A failure
-stops setup before theme, application, or desktop changes.
+Run `python setup.py` from the activated `.venv`; separate Pacman commands are
+not needed. Normal `sudo` authentication may still be requested in the terminal.
 
-Warnings such as `database file for 'extra' does not exist` mean the repository
-index is missing. Subsequent `target not found: zathura` errors can follow from
-that missing index; they do not establish that the package name is wrong.
-An offline ISO installation can have its installed-package database populated
-while online repository indexes are absent. This matches the confirmed
-[upstream offline-install issue](https://github.com/omacom/omarchy/issues/10263):
-the finalizer enables the online repositories without downloading their indexes.
+The Environment step reads enabled repositories and the database location using
+`pacman-conf`. If any `sync/<repository>.db` file is missing or empty, setup
+runs `sudo pacman --sync --refresh --noconfirm` once to download repository
+indexes. This does not upgrade installed packages. It checks every enabled
+index and queries the resulting package list before continuing. Existing,
+readable indexes skip the refresh, so reruns do not download lists needlessly.
+A corrupt but nonempty index stops setup for review rather than forcing a refresh.
 
-Collect these diagnostics on the affected PC without changing packages:
+Existing indexes and signatures are backed up, preserving ownership and modes,
+under `${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-configs/backups/package-databases-<timestamp>/`.
+If synchronization or its validation fails, setup restores saved indexes,
+removes newly created index/signature files, and stops. It does not rewrite
+Pacman's configuration or mirror lists. Custom symlinked database layouts
+require review before automatic recovery.
 
-```bash
-omarchy version
-pacman-conf --repo-list
-pacman-conf DBPath
-pacman-conf --repo omarchy Server
-pacman-conf --repo core Server
-ls -lh /var/lib/pacman/sync
-```
+This handles the confirmed [upstream offline-install issue](https://github.com/omacom/omarchy/issues/10263):
+the ISO can leave `omarchy`, `core`, `extra`, and `multilib` enabled without their
+indexes, causing `database file ... does not exist` and `target not found` errors.
 
-If `DBPath` differs from `/var/lib/pacman/`, inspect its `sync/` directory instead.
+Application steps install only missing targets with `--needed --noconfirm`.
+Required application dependency changes are allowed. Before installation, setup
+resolves the transaction and rejects protected desktop package changes. Every
+actual package transaction also uses the scoped
+[Pacman hook](config/pacman/preserve-desktop.hook), which aborts before package
+changes if a protected package would be upgraded, reinstalled, or removed.
+New Omarchy, Hyprland, Quickshell, kernel, and NVIDIA-driver replacements are
+blocked too. Missing 32-bit Steam graphics dependencies may be installed;
+existing graphics packages cannot be changed.
 
-#### Fresh-install recovery with application dependency changes allowed
-
-The emergency workflow keeps Omarchy and its desktop stack at 4.0.6, while
-allowing required application dependencies. Initialize the missing indexes
-manually from a terminal:
-
-```bash
-sudo pacman -Sy
-```
-
-This downloads repository metadata; it does not upgrade installed packages.
-Stop if synchronization fails. Install the failed application targets with an
-interactive transaction so you can review the dependency changes first:
-
-```bash
-sudo pacman -S --needed brave-bin zathura zathura-pdf-mupdf xdg-utils
-```
-
-Before answering the confirmation, inspect the complete package list. Cancel
-with `n` if it would change Omarchy, omarchy-settings, Hyprland, Quickshell,
-Qt, the kernel, NVIDIA drivers, or other desktop components. Do not bypass a
-dependency conflict or signing error. This manual transaction deliberately
-retains Pacman's confirmation; the native setup helpers use `--noconfirm`.
-
-After a successful installation, rerun `python setup.py` inside `.venv`.
-Brave and Zathura installation are skipped when already present, and their
-default associations are checked normally. No full system upgrade is added to
-setup, and this recovery does not run Omarchy's updater or release migrations.
+Protection covers Omarchy, Hyprland and companion libraries, Quickshell, Qt 6,
+kernels, NVIDIA/Mesa/Vulkan, the display manager, bootloader, systemd, Wayland,
+portals, and related desktop components. The hook is passed only to setup's
+Pacman commands, preserves existing hook directories, and is removed afterward.
+No permanent hook, package hold, or Pacman configuration edit is installed.
+Brave must resolve from the configured repositories; setup does not fall back
+to an unguarded AUR build. Conflicts, signing errors, missing targets, and
+blocked desktop changes stop setup without launching a system updater.
 
 The [stable mirror](https://github.com/omacom/omarchy-mirror#edge-rc-and-stable)
-serves the snapshot for the current release, not a permanent 4.0.6 snapshot.
-Keeping older desktop packages while installing newer application dependencies
-can create an unsupported partial upgrade even when package dependency checks
-pass; this procedure is an emergency compromise, not a verified frozen release.
-See [Arch's partial-upgrade guidance](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
-
-If every installed package version must stay unchanged, do not refresh against
-current repositories. Recover indexes and package sources from a known matching
-snapshot or backup instead. Cached package files alone do not recreate the
-repository databases. A full system upgrade remains a separate decision.
+serves the current release's snapshot, not a permanent 4.0.6 snapshot. Keeping
+older desktop packages while allowing newer application dependencies remains
+an emergency compromise: blocking desktop transactions does not prove ABI or
+runtime compatibility. See [Arch's partial-upgrade guidance](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
+A dependency conflict requiring protected packages needs separate review.
 
 ## Ghost Pastel Theme
 
@@ -217,8 +200,10 @@ Confirm the bar, wallpaper, and terminal colors visually.
 
 ## Brave
 
-Setup skips installation when `brave` is already available. Otherwise it uses
-Omarchy's browser installer and checks the executable afterward:
+Setup skips installation when `brave` is already available. Otherwise it first
+installs `brave-bin` through the guarded package transaction described above,
+then runs the native browser helper for flags, policy, and integration. Its
+package check sees Brave already installed and skips the unguarded Yay install:
 
 ```bash
 omarchy install browser brave
@@ -276,11 +261,8 @@ without changing the app. Open Discord from the launcher and sign in.
 
 ## Zathura
 
-Setup installs only missing packages:
-
-```bash
-omarchy pkg add zathura zathura-pdf-mupdf xdg-utils
-```
+Setup automatically installs missing `zathura`, `zathura-pdf-mupdf`, and
+`xdg-utils` packages through the guarded Pacman transaction described above.
 
 It verifies that `zathura --version` lists the `pdf-mupdf` plugin, then checks
 the PDF association. A matching default is skipped. Otherwise, MIME settings
@@ -330,24 +312,24 @@ and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-
 
 ## Steam
 
-Setup skips an existing `steam` executable. Otherwise it runs the foreground
-stages of Omarchy 4.0.6's Steam installer, in order, so the native helper selects
-the correct graphics dependencies:
+Setup skips an existing `steam` executable. Otherwise it follows the graphics
+selection from the [4.0.6 native helper](https://github.com/omacom/omarchy/blob/v4.0.6/bin/omarchy-install-gaming-gpu-lib32):
+Intel/AMD display adapters select their 32-bit Vulkan drivers, and Omarchy's
+native NVIDIA detection selects `lib32-nvidia-utils` or the 580xx equivalent.
+The selected graphics packages and Steam are installed together in one guarded
+transaction, so Steam resolves its graphics provider correctly. Existing target
+packages are skipped even when the repositories contain a newer version.
 
-```bash
-omarchy install gaming gpu-lib32
-omarchy pkg add steam
-```
+If installing a 32-bit companion requires upgrading the existing NVIDIA or
+other graphics stack, the transaction stops before changing packages. No GPU
+update or full system upgrade is performed to work around it.
 
-Each command is monitored and must finish successfully before setup continues.
-The `steam` executable is checked afterward. Unlike
-[`omarchy install gaming steam`](https://github.com/omacom/omarchy/blob/v4.0.6/bin/omarchy-install-gaming-steam),
-setup leaves Steam closed: the stock installer's detached client launch can
-download/update the client after the installer returns, independently of setup.
-Launch Steam manually afterward to finish client initialization and sign in.
-Client downloads, games, and launch options remain manual. Existing Steam
-preferences are not rewritten. The 4.5 lifecycle command is absent in 4.0.6
-and is not called. These package-install commands do not run a system upgrade.
+The `steam` executable is checked afterward. Setup leaves Steam closed; the
+stock installer's detached client launch can download/update the client after
+the installer returns, independently of setup. Launch Steam manually afterward
+to finish client initialization and sign in. Client downloads, games, and
+launch options remain manual. Existing Steam preferences are not rewritten.
+The 4.5 lifecycle command is absent in 4.0.6 and is not called.
 
 ### Steam UI Scaling
 

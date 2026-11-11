@@ -1,0 +1,47 @@
+# config/pacman/preserve-desktop.hook
+
+[Trigger]
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = omarchy*
+Target = hypr*
+Target = aquamarine*
+Target = quickshell*
+Target = qt6-*
+Target = linux
+Target = linux-*
+Target = nvidia*
+Target = lib32-nvidia*
+Target = mesa*
+Target = lib32-mesa*
+Target = vulkan-*
+Target = lib32-vulkan-*
+Target = libglvnd*
+Target = lib32-libglvnd*
+Target = uwsm*
+Target = sddm*
+Target = limine*
+Target = plymouth*
+Target = systemd*
+Target = xorg-server*
+Target = xorg-xwayland*
+Target = wayland*
+Target = xdg-desktop-portal*
+Target = polkit*
+
+[Trigger]
+Operation = Install
+Type = Package
+Target = omarchy*
+Target = hyprland*
+Target = quickshell*
+Target = linux
+Target = linux-*
+Target = nvidia*
+
+[Action]
+Description = Refusing desktop, kernel, or GPU changes in the emergency setup
+When = PreTransaction
+Exec = /usr/bin/false
+AbortOnFail
