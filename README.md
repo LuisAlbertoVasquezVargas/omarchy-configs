@@ -14,6 +14,11 @@ and their required dependencies automatically. It does not run a full package
 upgrade, switch Omarchy versions, or apply release migrations. Package
 transactions are guarded to preserve the installed desktop, kernel, and GPU stack.
 
+The separately requested [NVIDIA driver repair](NVIDIA-DRIVER-REPAIR.md) records
+the 2026-11-11 driver change for GPU firmware timeouts on this PC, its validation, and
+recovery files. It was applied outside `setup.py`; normal setup retains its
+GPU package protection.
+
 ## Target System
 
 - CPU: AMD Ryzen 7 5700X
