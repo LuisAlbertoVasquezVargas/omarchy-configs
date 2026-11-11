@@ -161,9 +161,12 @@ and the boot backup are local to this PC under:
 ~/Projects/pc-crash-investigation-20261111-153637/kernel-trial/
 ```
 
-The parent investigation folder holds the hardware-check results and a passive
-kernel-error log for the LTS boot. The error logger runs for 30 minutes during
-this test and flushes matching errors to disk without polling or stressing the GPU.
+The parent investigation folder holds the hardware-check results and passive
+kernel-error logs. The initial logger had a 30-minute limit. After another
+failure occurred outside that interval, it was replaced by the enabled user
+service `pc-gpu-error-watch.service`. It starts at login, has no runtime limit,
+and flushes matching errors to disk without polling or stressing the GPU.
+Its unit is at `~/.config/systemd/user/pc-gpu-error-watch.service`.
 
 To restore the original kernel preference while keeping both kernels installed:
 
@@ -191,16 +194,40 @@ The desktop entry passed validation, with only category/deprecation messages
 inherited from the packaged launcher. After launch, the running web helper had
 both `--disable-gpu` and `--disable-gpu-compositing`, and Steam logged
 `Disabling GPU acceleration: Disabled/CommandLine`. The user resumed the
-original workload and initially reported no crash. **This is an ongoing test,
-not a confirmed repair.** The process named in an Xid identifies an affected
-graphics client; it does not by itself establish that the application caused
-the GPU fault or rule out hardware instability.
+original workload and initially reported no crash. At **19:10:02**, that boot
+recorded another **Xid 13, Graphics FECS Exception: UCODE Fatal Error**, naming
+the NVIDIA `nv-probe` context. Simultaneous channel errors affected
+`steamwebhelper` and `zathura`; Xid 154, Xid 38, repeated Xid 109, and Xid 119
+GSP timeouts followed. The Steam flag had been active in that session and was
+verified again after the next reboot. **Disabling Steam interface acceleration
+did not prevent the GPU-wide failure.**
+
+The process named in an Xid identifies an affected graphics client; it does not
+by itself establish that the application caused the GPU fault. These results
+still do not distinguish a driver/firmware defect from GPU, VRAM, power, or
+other hardware instability.
 
 The override applies when Steam is opened from its application launcher or
 desktop actions. For a direct terminal launch, use `steam -cef-disable-gpu`.
 To undo the change, close Steam, remove this user launcher override, and reopen
 Steam using the packaged launcher. The original desktop entry and validation
 record are kept under the investigation folder in `steam-software-ui/`.
+
+## Prepared Video-Memory Diagnostic
+
+A standalone copy of
+[`memtest_vulkan` v0.5.0](https://github.com/GpuZelenograd/memtest_vulkan/releases/tag/v0.5.0)
+was downloaded into the private investigation folder. Its archive SHA-256
+matched the official GitHub release-asset digest. No system packages were
+installed for it. The local `run-vram-test.py` runner limits the diagnostic to
+8 GiB and six minutes, selects the NVIDIA Vulkan driver, saves the output,
+and refuses to start when the current boot already has matching GPU faults.
+
+**The diagnostic has not yet been run.** Its execution is waiting until the
+user's work is saved because loading the unstable GPU could reproduce the
+black screen. A clean result from this limited test would not establish that
+all VRAM or the power supply is healthy. Errors under the current Linux driver
+would also need interpretation before attributing them to a physical defect.
 
 ## Recovery Files and Rollback
 
