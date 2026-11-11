@@ -154,19 +154,47 @@ ls -lh /var/lib/pacman/sync
 ```
 
 If `DBPath` differs from `/var/lib/pacman/`, inspect its `sync/` directory instead.
-To retain the 4.0.6 system, recover indexes and package sources from a known
-matching repository snapshot or backup. The diagnostics help identify those
-sources; setup does not choose a snapshot date or rewrite mirrors automatically.
-Cached package files alone do not recreate the online repository databases.
 
-A database refresh alone downloads metadata rather than upgrading installed
-software, but current repository metadata may describe packages newer than the
-4.0.6 installation. The [stable mirror](https://github.com/omacom/omarchy-mirror#edge-rc-and-stable)
+#### Fresh-install recovery with application dependency changes allowed
+
+The emergency workflow keeps Omarchy and its desktop stack at 4.0.6, while
+allowing required application dependencies. Initialize the missing indexes
+manually from a terminal:
+
+```bash
+sudo pacman -Sy
+```
+
+This downloads repository metadata; it does not upgrade installed packages.
+Stop if synchronization fails. Install the failed application targets with an
+interactive transaction so you can review the dependency changes first:
+
+```bash
+sudo pacman -S --needed brave-bin zathura zathura-pdf-mupdf xdg-utils
+```
+
+Before answering the confirmation, inspect the complete package list. Cancel
+with `n` if it would change Omarchy, omarchy-settings, Hyprland, Quickshell,
+Qt, the kernel, NVIDIA drivers, or other desktop components. Do not bypass a
+dependency conflict or signing error. This manual transaction deliberately
+retains Pacman's confirmation; the native setup helpers use `--noconfirm`.
+
+After a successful installation, rerun `python setup.py` inside `.venv`.
+Brave and Zathura installation are skipped when already present, and their
+default associations are checked normally. No full system upgrade is added to
+setup, and this recovery does not run Omarchy's updater or release migrations.
+
+The [stable mirror](https://github.com/omacom/omarchy-mirror#edge-rc-and-stable)
 serves the snapshot for the current release, not a permanent 4.0.6 snapshot.
-Following a refresh with application installation can create
-an unsupported partial upgrade. Do not follow the warning's `-Sy` hint blindly
-on this frozen system. See [Arch's partial-upgrade guidance](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
-A full system upgrade is a separate decision and remains outside this setup.
+Keeping older desktop packages while installing newer application dependencies
+can create an unsupported partial upgrade even when package dependency checks
+pass; this procedure is an emergency compromise, not a verified frozen release.
+See [Arch's partial-upgrade guidance](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
+
+If every installed package version must stay unchanged, do not refresh against
+current repositories. Recover indexes and package sources from a known matching
+snapshot or backup instead. Cached package files alone do not recreate the
+repository databases. A full system upgrade remains a separate decision.
 
 ## Ghost Pastel Theme
 

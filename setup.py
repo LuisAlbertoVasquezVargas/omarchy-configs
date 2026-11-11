@@ -153,8 +153,8 @@ def verify_package_databases():
             "Pacman repository databases are missing or empty: " + ", ".join(missing)
             + ". Package installation cannot find targets without these indexes. "
             "No databases were refreshed or setup settings changed. "
-            "Restore repository metadata matching the installed 4.0.6 package set; "
-            "do not refresh rolling repositories and then install packages on a frozen system. "
+            "Initialize repository metadata separately and review application dependency changes "
+            "before installing packages; keep the Omarchy/desktop packages at 4.0.6. "
             "See README.md (Package Repository Databases)."
         )
 
