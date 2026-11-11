@@ -458,6 +458,41 @@ and verify that the weekly percentage and countdown fit without hovering;
 visual verification remains manual. Subsequent setup runs skip a matching
 active clone and print that the weekly display is already configured.
 
+### Enabled Widget Missing from the Bar
+
+Omarchy 4.0.6 hides Agents when no enabled provider has usage counts, quota
+windows, or a balance to display. An enabled clone in `omarchy plugin list
+--json` can therefore be invisible, particularly just after a fresh install.
+
+From a terminal in the running desktop session, request a native refresh:
+
+```bash
+omarchy-shell omarchy.agents refresh
+```
+
+The IPC target remains `omarchy.agents` for the user-owned clone. An `ok`
+response means the refresh was requested; collection finishes asynchronously.
+Wait a few seconds, then inspect the Codex record and actual bar visibility:
+
+```bash
+jq '{updatedAt, totalPrompts, totalSessions, limits, usageStatusText, authHelpText}' \
+  "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/agents/usage/codex.json"
+omarchy-shell shell debugBarGeometry | jq 'map(select(.id | endswith(".agents")))'
+```
+
+The geometry entry should report `visible: true` once usage is available.
+If collection still fails, use `usageStatusText` and `authHelpText` to diagnose
+the failure. Application sign-in remains manual.
+
+Confirmed on this PC on November 11, 2026, running Omarchy `4.0.6-1`: the clone
+was already enabled and contained the weekly display patch, but the initial
+Codex record had zero usage counts, no limits, and `Codex limits unavailable`
+with `account/read`. The native refresh returned local usage and a weekly
+limit at 1% used with an empty `usageStatusText`. Shell diagnostics then
+reported the Agents button visible, and the user confirmed it appeared.
+Recovery used the existing clone and native collector; no configuration or
+code changes were needed on the desktop.
+
 ## Compact Window Layout and Focus Border
 
 Setup appends the reviewed [compact layout](config/hypr/compact-layout.lua) to
