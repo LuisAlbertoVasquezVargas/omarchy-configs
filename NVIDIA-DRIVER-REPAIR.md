@@ -148,7 +148,9 @@ installation; DKMS and the installed LTS boot image were then validated.
 The first LTS boot reported `6.18.57-2-lts`, matching NVIDIA modules, normal
 GPU telemetry near 35°C, and no initial NVIDIA or Hyprland configuration
 errors. The user resumed the Dota download and slide-compilation workload.
-**Stability testing is ongoing; the LTS kernel is not yet a confirmed fix.**
+At **16:49:50**, that LTS boot also recorded **Xid 13, Graphics FECS Exception:
+UCODE Fatal Error**, this time attributed to `steamwebhelper`, followed by
+Xid 154, Xid 38, and Xid 109. **The LTS kernel did not resolve the crashes.**
 
 The trial orders `linux-lts` first in Limine through
 `/etc/limine-entry-tool.d/zz-pc-crash-kernel-trial.conf`. The original
@@ -175,6 +177,30 @@ kernel entry. It has not been exercised during this trial. The original kernel
 also exhibited freezes. The driver rollback helper and boot backup below
 predate the LTS addition; review both kernel images and the current boot order
 before using that older recovery procedure.
+
+## Steam Interface Mitigation
+
+After the LTS failure, a reversible user launcher override was added at
+`~/.local/share/applications/steam.desktop`. It adds `-cef-disable-gpu` to the
+main Steam command and its desktop actions. This disables GPU acceleration in
+Steam's CEF interface; games retain their GPU rendering. Valve documents the
+flag as an interface workaround in its
+[Steam Linux issue tracker](https://github.com/ValveSoftware/steam-for-linux/issues/10514).
+
+The desktop entry passed validation, with only category/deprecation messages
+inherited from the packaged launcher. After launch, the running web helper had
+both `--disable-gpu` and `--disable-gpu-compositing`, and Steam logged
+`Disabling GPU acceleration: Disabled/CommandLine`. The user resumed the
+original workload and initially reported no crash. **This is an ongoing test,
+not a confirmed repair.** The process named in an Xid identifies an affected
+graphics client; it does not by itself establish that the application caused
+the GPU fault or rule out hardware instability.
+
+The override applies when Steam is opened from its application launcher or
+desktop actions. For a direct terminal launch, use `steam -cef-disable-gpu`.
+To undo the change, close Steam, remove this user launcher override, and reopen
+Steam using the packaged launcher. The original desktop entry and validation
+record are kept under the investigation folder in `steam-software-ui/`.
 
 ## Recovery Files and Rollback
 
