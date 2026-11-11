@@ -356,7 +356,6 @@ def install_steam():
     print("Installing Steam...", flush=True)
     run_command(["omarchy", "install", "gaming", "gpu-lib32"])
     run_command(["omarchy", "pkg", "add", "steam"])
-    run_command(["omarchy", "lifecycle", "dispatch", "post-install", "steam"])
 
     if shutil.which("steam") is None:
         raise RuntimeError("Steam was not found after installation.")
@@ -383,7 +382,7 @@ def configure_bar_widget(widget_id, default_section, settings, label):
         raise RuntimeError("Omarchy bar layout must be a JSON object.")
     matches = []
     legacy_id = f"{os.environ.get('USER') or getpass.getuser()}." + widget_id.removeprefix("omarchy.")
-    for section in ["left", "centerBegin", "center", "centerEnd", "right", "tray"]:
+    for section in ["left", "center", "right"]:
         entries = layout.get(section, [])
         if not isinstance(entries, list) or any(not isinstance(entry, dict) for entry in entries):
             raise RuntimeError(f"Invalid Omarchy bar section: {section}")
@@ -482,9 +481,9 @@ def configure_compact_layout():
 def configure_displays():
     configure_hyprland_override("monitors.lua", "displays.lua", "Samsung and BenQ display profiles")
 
-def report_monitor_workspaces():
+def report_workspaces():
     current_version = omarchy_output("version")
-    print(f"Using native Omarchy workspace behavior: 10 workspaces per monitor in version {current_version}")
+    print(f"Using native Omarchy {current_version} workspaces: global IDs 1-10 with the default shortcuts.")
 
 def configure_dota_close_guard():
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
@@ -496,6 +495,8 @@ def configure_dota_close_guard():
     updated = source.read_text()
     already_installed = original == updated and destination.stat().st_mode & 0o777 == 0o755
     backup = None
+
+    run_command(["bash", "-n", str(source)])
 
     if already_installed:
         print("Dota close-window guard is already installed; skipping the helper copy.")
@@ -522,17 +523,13 @@ def configure_dota_close_guard():
     print("Super+W closes the focused window unless this user's Dota 2 process is running.")
 
 def workspace_button_source(original):
-    old_code = """  // The first five of the monitor's own, and any of the rest that exist. After
-  // them come workspaces that are only visiting: those of a monitor that is
-  // unplugged, which had no room to join this one's.
-  function workspaceIds() {
-    var base = root.block * root.slots
-    var ids = [base + 1, base + 2, base + 3, base + 4, base + 5]
+    old_code = """  function workspaceIds() {
+    var ids = [1, 2, 3, 4, 5]
+    var values = Hyprland.workspaces.values
 """
     new_code = """  function workspaceIds() {
-    var base = root.block * root.slots
-    var ids = []
-    for (var slot = 1; slot <= root.slots; slot++) ids.push(base + slot)
+    var ids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    var values = Hyprland.workspaces.values
 """
     if original.count(old_code) + original.count(new_code) != 1:
         raise RuntimeError("Workspace widget implementation changed; review it before applying this step.")
@@ -631,20 +628,26 @@ def verify_environment():
         raise RuntimeError("Run this script on an Omarchy desktop.")
 
     version = omarchy_output("version")
-    if version.split("-", 1)[0] != "4.5.0":
-        raise RuntimeError(f"This setup targets Omarchy 4.5.0 (Quattro RS); installed version is {version}. No setup steps were applied.")
+    if version.split("-", 1)[0] != "4.0.6":
+        raise RuntimeError(f"This emergency branch requires Omarchy 4.0.6; installed version is {version}. Install or restore 4.0.6 separately. No setup steps were applied.")
     if not os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
         raise RuntimeError("Run setup from a terminal inside your active Omarchy desktop session.")
 
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
     if config_directory.resolve() != (Path.home() / ".config").resolve():
-        raise RuntimeError("Omarchy 4.5's plugin CLI writes to ~/.config; this desktop setup requires that configuration location.")
+        raise RuntimeError("Omarchy 4.0.6's plugin CLI writes to ~/.config; this desktop setup requires that configuration location.")
+    for executable in ("hyprctl", "luac", "bash", "/usr/lib/qt6/bin/qmlformat"):
+        if shutil.which(executable) is None:
+            raise RuntimeError(f"Required validation tool is missing: {executable}. No setup steps were applied.")
+    errors = command_output(["hyprctl", "configerrors"]).strip()
+    if errors:
+        raise RuntimeError(f"Resolve existing Hyprland configuration errors before setup: {errors}")
     for name in ("hyprland.lua", "bindings.lua"):
         path = config_directory / "hypr" / name
         content = path.read_text()
         retired = ("hypr.steam-workspaces", "hypr.chat-workspaces", "hypr.repo-workspaces", "steam_window_geometries", "local connected_monitors")
         if any(marker in content for marker in retired) or re.search(r"\bfor\s+workspace\s*=\s*8\s*,\s*10\s+do\b", content):
-            raise RuntimeError(f"Legacy 4.0 overrides found in {path}. Review them before using native 4.5 workspaces; see README.md (Displays and Ten Workspaces per Monitor). No setup steps were applied.")
+            raise RuntimeError(f"Retired workspace or app-routing overrides found in {path}. Review them before using native 4.0.6 workspaces; see README.md (Displays and Ten Workspaces). No setup steps were applied.")
 
 def main():
     steps = [
@@ -662,8 +665,8 @@ def main():
         ("Clock Format", [configure_clock_format]),
         ("Agents Widget", [configure_agents_widget]),
         ("Compact Window Layout and Focus Border", [configure_compact_layout]),
-        ("Displays and Ten Workspaces per Monitor", [
-            configure_displays, configure_workspace_buttons, report_monitor_workspaces,
+        ("Displays and Ten Workspaces", [
+            configure_displays, configure_workspace_buttons, report_workspaces,
         ]),
     ]
     state_directory = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")

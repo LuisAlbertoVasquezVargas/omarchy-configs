@@ -2,8 +2,16 @@
 
 # Omarchy Desktop Config
 
-Personal configuration for **Omarchy 4.5.0 (Quattro RS)** on this AMD/NVIDIA PC.
-See the [4.5 release notes](https://omarchy.org/news/2026/11/omarchy-4-5/).
+Emergency configuration for **Omarchy 4.0.6 (Quattro)** on this AMD/NVIDIA PC.
+Branch: `emergency/omarchy-4.0.6`, based on `main`. The 4.5 setup stays on `main`.
+See the [official 4.0.6 release](https://github.com/omacom/omarchy/releases/tag/v4.0.6).
+
+Install or restore Omarchy 4.0.6 separately before running setup. This branch
+configures an existing desktop; it does not downgrade Omarchy or Arch packages.
+**System-update steps are excluded**, including the experimental NVIDIA update.
+Setup does not refresh package databases, run a full package upgrade, switch
+Omarchy versions, or apply release migrations. It still installs missing
+application packages and their dependencies through the native 4.0.6 helpers.
 
 ## Target System
 
@@ -30,8 +38,11 @@ a root `setup.py`, named steps in README order, a project `.venv`, and
 Review the code before running it. `python setup.py` takes no arguments and
 **applies configuration immediately**. There is no `--apply` or preview mode.
 It checks the Omarchy version and active desktop session before performing
-setup. Omarchy 4.0 installs and detected legacy workspace rules are refused.
-This is a 4.5 setup, not an operating-system updater or a 4.0 migration tool.
+setup. Only Omarchy 4.0.6 (including package releases such as `4.0.6-1`) is
+accepted. Other versions, missing validation tools, existing Hyprland errors,
+and detected retired workspace/app-routing overrides stop setup before its
+configuration steps. The script does not convert a saved 4.5 `.config` tree;
+use the 4.0.6 defaults and preserve/review personal overrides individually.
 
 Each step checks the installed component or desired setting and skips a match.
 Changed files are backed up. Lua syntax and effective Hyprland configuration
@@ -72,29 +83,35 @@ available after a failure. Desktop services restarted by native helpers keep
 their normal lifecycle; setup waits for the helper's readiness check, not for
 the service to exit.
 
-The setup covers the sections below through **Displays and Ten Workspaces per
-Monitor**. Application sign-ins, synchronization, visual checks, and the
-experimental NVIDIA update remain manual. Earlier implementations remain in
-Git history at commit `563f023`. Future preferences are listed under
+The setup covers the sections below through **Displays and Ten Workspaces**.
+Application sign-ins, synchronization, and visual checks remain manual.
+Earlier implementations remain in Git history at commit `563f023`; the old
+collector, Steam geometry, and app routing are not restored by this branch.
+Future preferences are listed under
 [Ideas](#ideas).
 
-Implementation has been checked against the official `v4.5.0` source. The
-Agents weekly display and Steam UI scale 1 were verified live on this PC
-running 4.5.0-3. Remaining manual checks are listed in their respective sections.
+Compatibility has been reviewed against the official `v4.0.6` source: native
+CLI routes, Lua defaults, shell configuration, and both widget implementations.
+The emergency setup has not been applied to a live 4.0.6 desktop. Source and
+syntax checks do not establish runtime or hardware compatibility. Previous
+4.5 visual checks do not validate this branch; repeat the manual checks below.
 
 ## Installation USB
 
 See [Create an Omarchy Installation USB](INSTALLATION-USB.md).
-USB flashing, installation, updating Omarchy, and rebooting are separate from
+USB flashing, installation, and rebooting are separate from
 running this repository's setup script.
 
 ## Clone This Repository
 
 ```bash
 cd ~/Projects
-git clone https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
+git clone --branch emergency/omarchy-4.0.6 https://github.com/LuisAlbertoVasquezVargas/omarchy-configs.git
 cd omarchy-configs
 ```
+
+The clone command requires this branch to have been pushed. In the existing
+checkout where the branch was created, use `git switch emergency/omarchy-4.0.6`.
 
 Create and activate the project environment:
 
@@ -110,7 +127,7 @@ and Python conventions in the sibling `swe-standards` repository.
 ## Ghost Pastel Theme
 
 After reviewing the code, run it as your normal desktop user from a terminal
-inside the unlocked Omarchy 4.5.0 session, without `sudo` or arguments:
+inside the unlocked Omarchy 4.0.6 session, without `sudo` or arguments:
 
 ```bash
 python setup.py
@@ -159,7 +176,7 @@ The old instruction to disable graphics acceleration remains retired.
 
 ## Ghostty
 
-Terminal selection is not automated. Test Ghostty and Foot on Quattro RS before
+Terminal selection is not automated. Test Ghostty and Foot on Omarchy 4.0.6 before
 choosing and documenting the default terminal.
 
 ## WhatsApp
@@ -242,23 +259,23 @@ and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-
 ## Steam
 
 Setup skips an existing `steam` executable. Otherwise it runs the foreground
-stages of Omarchy 4.5's Steam installer, in order, so the native helper selects
+stages of Omarchy 4.0.6's Steam installer, in order, so the native helper selects
 the correct graphics dependencies:
 
 ```bash
 omarchy install gaming gpu-lib32
 omarchy pkg add steam
-omarchy lifecycle dispatch post-install steam
 ```
 
 Each command is monitored and must finish successfully before setup continues.
 The `steam` executable is checked afterward. Unlike
-[`omarchy install gaming steam`](https://github.com/basecamp/omarchy/blob/v4.5.0/bin/omarchy-install-gaming-steam),
+[`omarchy install gaming steam`](https://github.com/omacom/omarchy/blob/v4.0.6/bin/omarchy-install-gaming-steam),
 setup leaves Steam closed: the stock installer's detached client launch can
 download/update the client after the installer returns, independently of setup.
 Launch Steam manually afterward to finish client initialization and sign in.
 Client downloads, games, and launch options remain manual. Existing Steam
-preferences are not rewritten.
+preferences are not rewritten. The 4.5 lifecycle command is absent in 4.0.6
+and is not called. These package-install commands do not run a system upgrade.
 
 ### Steam UI Scaling
 
@@ -292,7 +309,7 @@ SDL_AUDIODRIVER=pulse PULSE_LATENCY_MSEC=60 VK_ICD_FILENAMES=/usr/share/vulkan/i
 ```
 
 Restored unchanged from commit `563f023`. These personal launch options have
-not yet been revalidated on Omarchy 4.5.0. `setup.py` does not edit them.
+not yet been revalidated on Omarchy 4.0.6. `setup.py` does not edit them.
 
 ## Disable Super+W While Dota 2 Runs
 
@@ -308,8 +325,8 @@ lookup error prevents closing. Failed binding validation restores both the
 binding file and any helper changed by that attempt.
 
 Test Super+W before starting Dota, while Dota runs, and after exiting it.
-The close dispatcher matches Omarchy 4.5's default binding; that source check
-and the guard tests do not replace this live check.
+The close dispatcher matches Omarchy 4.0.6's default binding; source and shell
+syntax checks do not replace this live check.
 
 ## Clock Format
 
@@ -342,22 +359,26 @@ Account setup stays manual.
 
 ### Weekly Percentage and Reset Countdown
 
-Adapted from the laptop's [Agents display change in commit
+Backported from the laptop's [Agents display change in commit
 66affcc](https://github.com/LuisAlbertoVasquezVargas/omarchy-configs-laptop/commit/66affcc57b9773a4343707cf59e74190a6bfb50c).
-The Weekly row shows the allowance **used** beside its reset countdown as soon
-as the panel opens:
+Omarchy 4.0.6 uses a `LimitRow`, with a label/value line above the meter and a
+reset line below. The backport shows the weekly allowance **used** beside its
+reset countdown on the value line as soon as the panel opens:
 
 ```text
-Weekly  ━━━━━░░░░░  35% · 3d 19h
+Weekly                  35% · 3d 19h
+━━━━━━━━━━░░░░░░░░░░
 ```
 
-Session, monthly, and model-scoped rows retain their existing display. Native
-usage collection, provider preferences, tooltips, and bar placement are
-preserved. The value reserves room for `100% · 00h 00m` and expands for longer
-text, using Omarchy's locale number formatter and plain-text rendering.
+The duplicate reset line is hidden only for Weekly. Session, monthly, and
+model-scoped rows retain their existing display. Native usage collection,
+provider preferences, and bar placement are preserved. The weekly value reserves
+room for `100% · 00h 00m` and expands for longer text, using 4.0.6's integer
+percentage formatting and plain-text rendering. The 4.5 `CompactLimit` and
+locale formatter are not available in this release.
 
 The focused [QML patch](config/omarchy/agents-weekly.patch) changes only the
-`CompactLimit` value and its width measurement in the user-owned clone:
+`LimitRow` display bindings in the user-owned clone:
 
 ```text
 ~/.config/omarchy/plugins/<username>.agents/Panel.qml
@@ -397,7 +418,7 @@ border colors intact. Colors are read again when Hyprland reloads.
 
 Verify the spacing and colors visually, including after a theme change.
 
-## Displays and Ten Workspaces per Monitor
+## Displays and Ten Workspaces
 
 Setup appends [this PC's display profiles](config/hypr/displays.lua) to
 `~/.config/hypr/monitors.lua`, preserving unrelated settings:
@@ -411,16 +432,18 @@ Lua syntax, backups, repeat-run skips, and rollback follow the compact-layout
 step. The BenQ's description and placement still need a live check after it is
 reconnected; the fallback monitor rule remains in place for other displays.
 
-Workspace placement uses **Omarchy 4.5's native ten slots per monitor**.
-Each monitor's bar labels its slots locally; Hyprland uses global blocks of ten
-IDs underneath. Super+1 through Super+0 select slots on the focused monitor,
-with Omarchy's default move shortcuts and monitor hotplug behavior retained.
-The old shared ten-workspace placement and Steam/chat routing are not installed.
+Workspace behavior uses **Omarchy 4.0.6's native global IDs 1-10**, shared across
+the desktop. There is no block of ten IDs for each monitor in this release.
+Super+1 through Super+0 select workspaces 1-10; adding Shift moves the focused
+window and follows it, and adding Shift+Alt moves it silently. Default monitor
+movement shortcuts and workspace layout toggles are retained. No persistent
+monitor assignments, Steam/chat routing, or 4.5 workspace manager are installed.
 
 To show all ten slots, including empty ones, setup clones `omarchy.workspaces`
 into `~/.config/omarchy/plugins/<username>.workspaces/` and updates its button
-list. The tenth label is `0`; active layout glyphs and guest workspaces are
-preserved. This changes bar buttons, not the native workspace manager.
+list. The tenth label is `0`; the active-workspace glyph, occupancy indicators,
+and native focus command are preserved. Clicking a button selects its global
+ID using the 4.0.6 dispatcher. This changes bar buttons, not workspace placement.
 
 The staged widget's QML syntax is checked before installation. Backups live under
 `${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/backups/workspaces-widget-<timestamp>/`,
@@ -438,9 +461,15 @@ hyprctl configerrors
 hyprctl -j workspaces | jq 'sort_by(.id) | map({id, monitor, windows})'
 ```
 
-Verify resolutions, non-overlapping positions, shortcuts on each monitor,
+Verify resolutions, non-overlapping positions, numeric and monitor shortcuts,
 all ten buttons, and unplug/reconnect behavior. Hardware and visual checks
 for the disconnected BenQ and monitor hotplug behavior remain outstanding.
+
+If Environment reports retired routing or workspace rules, review just those
+overrides first. It does not delete or migrate them automatically. Do not copy
+the complete 4.5 configuration into 4.0.6: a user clone or required module may
+depend on APIs introduced after 4.0.6. Unexpected widget patch context stops
+setup for review rather than overwriting those customizations.
 
 ## Ideas
 
@@ -450,20 +479,7 @@ These are future preferences; setup does not apply them:
   within the screen, using sizes suited to the connected display.
 - **Optional app placement:** place Steam, Dota, and chat apps into chosen
   workspace slots when available, respecting manual moves, avoiding unwanted
-  focus changes, and preserving Omarchy's native ten workspaces per monitor.
-
-## Experimental: NVIDIA GPU Driver Update
-
-This is a separate optional operation, not performed by `setup.py`:
-
-```bash
-omarchy update
-omarchy system reboot
-nvidia-smi
-```
-
-Run it only when specifically updating the system. Revalidate older game
-workarounds after the update instead of reinstalling the old configuration tree.
+  focus changes, and preserving Omarchy 4.0.6's native global workspaces.
 
 ## Apply Configs with an Agent
 
