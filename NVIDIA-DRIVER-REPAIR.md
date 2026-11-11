@@ -5,7 +5,9 @@
 On **2026-11-11**, the RTX 5060 Ti in the desktop described in
 [README.md](README.md#target-system) received a targeted NVIDIA driver change
 from **615.78.08-1** to **620.70.06-1**. Omarchy stayed at **4.0.6-1**. The new
-driver passed the checks after a reset described below.
+driver passed the initial checks after a reset, but crashes later recurred.
+See [Recurring Crashes and LTS Kernel Trial](#recurring-crashes-and-lts-kernel-trial)
+for the subsequent investigation and current test.
 
 This was separately requested maintenance. `setup.py` retains its existing
 protection against GPU package changes; running setup does not repeat this repair.
@@ -120,6 +122,59 @@ hyprctl configerrors
 The filtered journal should have no fault entries, and `hyprctl configerrors`
 should be empty. If the problem returns, save the affected boot's kernel log
 before another reset when possible; after a reset, inspect `journalctl -b -1 -k`.
+
+## Recurring Crashes and LTS Kernel Trial
+
+Later on 2026-11-11, black screens recurred on `620.70.06`, with square artifacts
+appearing shortly before the failure after the desktop loaded. One boot logged
+an Xwayland **Xid 13, Graphics FECS Exception: UCODE Fatal Error**, followed by
+Xid 154, repeated Xid 109 context-switch timeouts, and Xid 8. A subsequent boot
+logged Xid 119 GSP timeouts. The driver change alone did not resolve the problem.
+
+Read-only hardware checks found SSD SMART health passing, zero media/data
+integrity errors, and zero Btrfs device error counters. The SSD's recorded
+NVMe error-log entries were invalid-field responses on the admin queue rather
+than media errors. The two 8 GiB DDR4 modules were configured at 2666 MT/s and
+1.2 V. A memory test was not performed; these results do not rule out a GPU,
+VRAM, power, or system-memory fault.
+
+A controlled kernel comparison added `linux-lts` and `linux-lts-headers`, both
+**6.18.57-2**, alongside the existing kernel. NVIDIA stayed at **620.70.06-1**,
+Omarchy and its settings stayed at **4.0.6-1**, and existing package versions
+were unchanged. The NVIDIA modules built against the LTS headers before
+installation; DKMS and the installed LTS boot image were then validated.
+**Snapper snapshot 2** and a separate boot backup were created.
+
+The first LTS boot reported `6.18.57-2-lts`, matching NVIDIA modules, normal
+GPU telemetry near 35°C, and no initial NVIDIA or Hyprland configuration
+errors. The user resumed the Dota download and slide-compilation workload.
+**Stability testing is ongoing; the LTS kernel is not yet a confirmed fix.**
+
+The trial orders `linux-lts` first in Limine through
+`/etc/limine-entry-tool.d/zz-pc-crash-kernel-trial.conf`. The original
+`linux-omarchy` entry remains selectable. Trial packages, logs, the installer,
+and the boot backup are local to this PC under:
+
+```text
+~/Projects/pc-crash-investigation-20261111-153637/kernel-trial/
+```
+
+The parent investigation folder holds the hardware-check results and a passive
+kernel-error log for the LTS boot. The error logger runs for 30 minutes during
+this test and flushes matching errors to disk without polling or stressing the GPU.
+
+To restore the original kernel preference while keeping both kernels installed:
+
+```bash
+trial="$HOME/Projects/pc-crash-investigation-20261111-153637/kernel-trial"
+sudo bash "$trial/restore-original-kernel.sh"
+```
+
+That helper disables the trial's ordering override and refreshes the original
+kernel entry. It has not been exercised during this trial. The original kernel
+also exhibited freezes. The driver rollback helper and boot backup below
+predate the LTS addition; review both kernel images and the current boot order
+before using that older recovery procedure.
 
 ## Recovery Files and Rollback
 
