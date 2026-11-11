@@ -137,6 +137,30 @@ def run_step(number, total, label, actions, log_directory, run_log):
 def omarchy_output(*arguments):
     return command_output(["omarchy", *arguments]).strip()
 
+def verify_package_databases():
+    repositories = command_output(["pacman-conf", "--repo-list"]).splitlines()
+    if not repositories:
+        raise RuntimeError("Pacman has no configured repositories. See README.md (Package Repository Databases).")
+
+    database_directory = Path(command_output(["pacman-conf", "DBPath"]).strip()) / "sync"
+    missing = []
+    for repository in repositories:
+        database = database_directory / f"{repository}.db"
+        if not database.is_file() or database.stat().st_size == 0:
+            missing.append(str(database))
+    if missing:
+        raise RuntimeError(
+            "Pacman repository databases are missing or empty: " + ", ".join(missing)
+            + ". Package installation cannot find targets without these indexes. "
+            "No databases were refreshed or setup settings changed. "
+            "Restore repository metadata matching the installed 4.0.6 package set; "
+            "do not refresh rolling repositories and then install packages on a frozen system. "
+            "See README.md (Package Repository Databases)."
+        )
+
+    run_command(["pacman", "--sync", "--list", "--quiet"], quiet=True)
+    print("Pacman repository databases are present and readable; no refresh performed.")
+
 def install_ghost_pastel():
     installed_themes = omarchy_output("theme", "list").splitlines()
 
@@ -636,7 +660,7 @@ def verify_environment():
     config_directory = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
     if config_directory.resolve() != (Path.home() / ".config").resolve():
         raise RuntimeError("Omarchy 4.0.6's plugin CLI writes to ~/.config; this desktop setup requires that configuration location.")
-    for executable in ("hyprctl", "luac", "bash", "/usr/lib/qt6/bin/qmlformat"):
+    for executable in ("hyprctl", "luac", "bash", "pacman", "pacman-conf", "/usr/lib/qt6/bin/qmlformat"):
         if shutil.which(executable) is None:
             raise RuntimeError(f"Required validation tool is missing: {executable}. No setup steps were applied.")
     errors = command_output(["hyprctl", "configerrors"]).strip()
@@ -651,7 +675,7 @@ def verify_environment():
 
 def main():
     steps = [
-        ("Environment", [verify_environment]),
+        ("Environment", [verify_environment, verify_package_databases]),
         ("Ghost Pastel Theme", [install_ghost_pastel]),
         ("Brave", [install_brave, set_brave_default]),
         ("WhatsApp", [report_whatsapp]),

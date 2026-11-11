@@ -39,10 +39,11 @@ Review the code before running it. `python setup.py` takes no arguments and
 **applies configuration immediately**. There is no `--apply` or preview mode.
 It checks the Omarchy version and active desktop session before performing
 setup. Only Omarchy 4.0.6 (including package releases such as `4.0.6-1`) is
-accepted. Other versions, missing validation tools, existing Hyprland errors,
-and detected retired workspace/app-routing overrides stop setup before its
-configuration steps. The script does not convert a saved 4.5 `.config` tree;
-use the 4.0.6 defaults and preserve/review personal overrides individually.
+accepted. Other versions, missing validation tools or repository databases,
+existing Hyprland errors, and detected retired workspace/app-routing overrides
+stop setup before its configuration steps. The script does not convert a saved
+4.5 `.config` tree; use the 4.0.6 defaults and preserve/review personal overrides
+individually.
 
 Each step checks the installed component or desired setting and skips a match.
 Changed files are backed up. Lua syntax and effective Hyprland configuration
@@ -123,6 +124,49 @@ python -m pip install -r requirements.txt
 
 Activate `.venv` in each terminal before running setup. Code follows the general
 and Python conventions in the sibling `swe-standards` repository.
+
+### Package Repository Databases
+
+Package installation requires local indexes for every enabled Pacman repository.
+The Environment step reads the repository list and database location through
+`pacman-conf`, checks for missing or empty `sync/<repository>.db` files, and
+queries the existing indexes with `pacman --sync --list --quiet`. These are
+read-only checks; no database download or system update is performed. A failure
+stops setup before theme, application, or desktop changes.
+
+Warnings such as `database file for 'extra' does not exist` mean the repository
+index is missing. Subsequent `target not found: zathura` errors can follow from
+that missing index; they do not establish that the package name is wrong.
+An offline ISO installation can have its installed-package database populated
+while online repository indexes are absent. This matches the confirmed
+[upstream offline-install issue](https://github.com/omacom/omarchy/issues/10263):
+the finalizer enables the online repositories without downloading their indexes.
+
+Collect these diagnostics on the affected PC without changing packages:
+
+```bash
+omarchy version
+pacman-conf --repo-list
+pacman-conf DBPath
+pacman-conf --repo omarchy Server
+pacman-conf --repo core Server
+ls -lh /var/lib/pacman/sync
+```
+
+If `DBPath` differs from `/var/lib/pacman/`, inspect its `sync/` directory instead.
+To retain the 4.0.6 system, recover indexes and package sources from a known
+matching repository snapshot or backup. The diagnostics help identify those
+sources; setup does not choose a snapshot date or rewrite mirrors automatically.
+Cached package files alone do not recreate the online repository databases.
+
+A database refresh alone downloads metadata rather than upgrading installed
+software, but current repository metadata may describe packages newer than the
+4.0.6 installation. The [stable mirror](https://github.com/omacom/omarchy-mirror#edge-rc-and-stable)
+serves the snapshot for the current release, not a permanent 4.0.6 snapshot.
+Following a refresh with application installation can create
+an unsupported partial upgrade. Do not follow the warning's `-Sy` hint blindly
+on this frozen system. See [Arch's partial-upgrade guidance](https://wiki.archlinux.org/title/System_maintenance#Partial_upgrades_are_unsupported).
+A full system upgrade is a separate decision and remains outside this setup.
 
 ## Ghost Pastel Theme
 
