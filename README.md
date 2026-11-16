@@ -21,8 +21,10 @@ GPU package protection.
 
 ## Target System
 
+- Motherboard: Gigabyte B450M DS3H V2.
+  AMD B450 chipset, AM4 socket, Micro-ATX (mATX).
 - CPU: AMD Ryzen 7 5700X
-- GPU: NVIDIA GeForce RTX 5060 Ti
+- GPU: NVIDIA GeForce RTX 5060 Ti, 16 GB VRAM
 - Primary display: Samsung LS27DG30X, 1920×1080 at 60 Hz, scale 1.
   Confirmed description: `Samsung Electric Company LS27DG30X H8CX700532`.
 - Secondary display: BenQ G610HDAL, 1366×768 at 59.79 Hz, scale 1,
