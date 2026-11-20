@@ -535,7 +535,10 @@ def configure_hyprland_override(filename, source_name, label):
     original = config_file.read_text()
 
     reload_hyprland(f"{label} check")
-    if original.rstrip().endswith(override.rstrip()):
+    matches = original.count(override.rstrip())
+    if matches > 1:
+        raise RuntimeError(f"Duplicate {label} overrides found in {config_file}; review them before continuing.")
+    if matches == 1:
         print(f"{label} is already configured; skipping.")
         return
 
@@ -555,6 +558,9 @@ def configure_hyprland_override(filename, source_name, label):
         raise
 
     print(f"{label} configured.")
+
+def configure_steam_workspaces():
+    configure_hyprland_override("hyprland.lua", "steam-workspaces.lua", "Steam workspace 1 and Dota workspace 2")
 
 def configure_compact_layout():
     configure_hyprland_override("looknfeel.lua", "compact-layout.lua", "Compact layout and theme borders")
@@ -741,7 +747,7 @@ def main():
         ("Zathura", [install_zathura, set_zathura_pdf_default]),
         ("Neovim", [configure_neo_tree]),
         ("Codex CLI Approval Defaults", [configure_codex_defaults]),
-        ("Steam", [install_steam]),
+        ("Steam", [install_steam, configure_steam_workspaces]),
         ("Disable Super+W While Dota 2 Runs", [configure_dota_close_guard]),
         ("Clock Format", [configure_clock_format]),
         ("Agents Widget", [configure_agents_widget]),

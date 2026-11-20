@@ -70,6 +70,7 @@ Setup validates and appends each fragment to its corresponding user file:
 | [compact-layout.lua](config/hypr/compact-layout.lua) | `looknfeel.lua` | Zero window gaps, three-pixel borders, and theme-based focus colors. |
 | [displays.lua](config/hypr/displays.lua) | `monitors.lua` | Samsung/BenQ display profiles and GTK scale 1. |
 | [dota-close-binding.lua](config/hypr/dota-close-binding.lua) | `bindings.lua` | Route Super+W through the helper that blocks closing while Dota runs. |
+| [steam-workspaces.lua](config/hypr/steam-workspaces.lua) | `hyprland.lua` | Conditional Steam workspace 1 and Dota workspace 2 placement, with updater fallback. |
 
 Hyprland reads the installed user files. Keep these repository fragments so
 setup can reproduce the configuration, compare it on later runs, and validate
@@ -95,7 +96,8 @@ the service to exit.
 The setup covers the sections below through **Displays and Ten Workspaces**.
 Application sign-ins, synchronization, and visual checks remain manual.
 Earlier implementations remain in Git history at commit `563f023`; the old
-collector, Steam geometry, and app routing are not restored by this branch.
+collector, Steam geometry, and chat-app routing are not restored by this branch.
+The Steam step now installs the reviewed Steam/Dota workspace placement below.
 Future preferences are listed under
 [Ideas](#ideas).
 
@@ -319,7 +321,9 @@ and [Configuration reference](https://learn.chatgpt.com/docs/config-file/config-
 
 ## Steam
 
-Setup skips an existing `steam` executable. Otherwise it follows the graphics
+Steam package installation skips an existing `steam` executable. Workspace
+placement is checked separately, even when Steam is already installed. When
+Steam is missing, package installation follows the graphics
 selection from the [4.0.6 native helper](https://github.com/omacom/omarchy/blob/v4.0.6/bin/omarchy-install-gaming-gpu-lib32):
 Intel/AMD display adapters select their 32-bit Vulkan drivers, and Omarchy's
 native NVIDIA detection selects `lib32-nvidia-utils` or the 580xx equivalent.
@@ -337,6 +341,54 @@ the installer returns, independently of setup. Launch Steam manually afterward
 to finish client initialization and sign in. Client downloads, games, and
 launch options remain manual. Existing Steam preferences are not rewritten.
 The 4.5 lifecycle command is absent in 4.0.6 and is not called.
+
+### Steam and Dota 2 Workspaces
+
+The Steam step appends the reviewed
+[workspace routing fragment](config/hypr/steam-workspaces.lua) to
+`~/.config/hypr/hyprland.lua`. It adapts the handler from commit `563f023` to a
+local Lua scope and uses Omarchy 4.0.6's native global workspace IDs:
+
+| Window | Workspace | Focus |
+| --- | --- | --- |
+| Steam client, Friends, chat, and dialogs | 1 | Silent |
+| Dota 2 | 2 | Follows the game |
+| Steam updater/bootstrap | 1 | Silent, including when other windows occupy 1 or 2 |
+
+For the main client and game, routing starts only when workspaces 1 and 2 have
+no other mapped windows at the start of a new Steam/Dota session. It remains
+enabled while related windows are open, and stops if an unrelated application
+takes either destination. Other games are unaffected. A blocked opening is not
+retried when a workspace later becomes empty; close all Steam/Dota windows to
+start a fresh check. Updater placement is independent of that condition.
+
+The handler watches initial mapping and delayed class/title changes, including
+the XWayland bootstrap that has an empty class and title `Steam`. Each opening
+window is handled once, with one allowed promotion from generic client to
+updater. Later title changes and mapping retries preserve manual workspace
+moves. Existing windows are left alone after a config reload.
+
+Matching configuration is skipped even if unrelated user settings follow it.
+Duplicates are reported for review. Lua syntax is checked before writing;
+changes are backed up, Hyprland is reloaded, and configuration errors restore
+the previous file. The old `require("hypr.steam-workspaces")` installation is
+still flagged for review rather than loading a second copy alongside this
+inline handler. Chat placement, Steam geometry, and persistent workspace rules
+remain unchanged.
+
+On the 4.0.6 desktop, pull this branch and rerun `python setup.py` inside `.venv`.
+Then close and reopen Steam with workspaces 1 and 2 free. Check the client on 1
+and launch Dota to check 2. Repeat with an unrelated window on either target
+to check the occupancy condition, and verify that manual moves stay put:
+
+```bash
+hyprctl configerrors
+hyprctl -j clients | jq '[.[] | {class, title, workspace: .workspace.id}]'
+```
+
+This backport has source and syntax checks; live 4.0.6 routing verification
+remains manual. The laptop inspected during this change reports Omarchy
+4.5.0-3, so this global-workspace fragment is not installed into that session.
 
 ### Steam UI Scaling
 
@@ -532,8 +584,9 @@ Workspace behavior uses **Omarchy 4.0.6's native global IDs 1-10**, shared acros
 the desktop. There is no block of ten IDs for each monitor in this release.
 Super+1 through Super+0 select workspaces 1-10; adding Shift moves the focused
 window and follows it, and adding Shift+Alt moves it silently. Default monitor
-movement shortcuts and workspace layout toggles are retained. No persistent
-monitor assignments, Steam/chat routing, or 4.5 workspace manager are installed.
+movement shortcuts and workspace layout toggles are retained. Steam/Dota routing
+uses these native global IDs. Persistent monitor assignments, chat routing, and
+the 4.5 workspace manager are not installed.
 
 To show all ten slots, including empty ones, setup clones `omarchy.workspaces`
 into `~/.config/omarchy/plugins/<username>.workspaces/` and updates its button
@@ -573,7 +626,7 @@ These are future preferences; setup does not apply them:
 
 - **Steam window layout:** arrange Library, Friends, and chat comfortably
   within the screen, using sizes suited to the connected display.
-- **Optional app placement:** place Steam, Dota, and chat apps into chosen
+- **Optional chat app placement:** place chat apps into chosen
   workspace slots when available, respecting manual moves, avoiding unwanted
   focus changes, and preserving Omarchy 4.0.6's native global workspaces.
 

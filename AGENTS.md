@@ -32,7 +32,15 @@ Use Omarchy 4.0.6's native global workspaces 1-10 and preserve its shortcuts,
 numbering, monitor movement, and workspace layout modes. A user-owned widget
 clone may show all ten buttons, including empty workspaces. Do not install
 4.5's per-monitor workspace implementation or restore retired persistent
-monitor-assignment rules or Steam/chat routing from the old 4.0 setup.
+monitor-assignment rules or chat routing from the old 4.0 setup.
+The Steam step installs the reviewed Steam/Dota handler from `563f023`, adapted
+as a scoped inline Lua fragment: Steam uses global workspace 1 silently and
+Dota uses 2 with focus when both destinations are free of unrelated windows
+at session startup. Steam updater windows always use 1 silently. Preserve
+manual moves, existing windows on reload, and native workspace shortcuts.
+Install routing even when Steam itself is already installed. Skip an exact
+fragment anywhere in the destination and reject duplicates. Keep backups and
+restore the configuration if reload or runtime validation fails.
 
 Agents setup installs the weekly-percentage/countdown display patch adapted
 to 4.0.6's `LimitRow` in a user-owned clone, preserving unrelated clone edits
